@@ -1,0 +1,6 @@
+# Este repo es solo documentación — sin dependencias ni secretos.
+.DS_Store
+node_modules/
+*.log
+.env
+.env.*
