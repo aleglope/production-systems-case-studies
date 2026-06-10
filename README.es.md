@@ -130,7 +130,7 @@ Todo este ecosistema lo construyó **una sola persona** en cuestión de meses. E
 
 Único responsable del stack de software de la empresa: arquitectura, desarrollo, integraciones, despliegues y operación de los 8 sistemas de este repositorio. También responsable de mentorizar a un becario (ver [Sala de Cenas](projects/sala-cenas.es.md)).
 
-- 🌐 Portfolio: *(pendiente de enlazar — `three-js-portfolio`)*
+- 🌐 Portfolio: [aglwences.dev](https://aglwences.dev)
 - 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
 - 🐙 GitHub: [@aleglope](https://github.com/aleglope)
 

@@ -130,7 +130,7 @@ This entire ecosystem was built by **one person** in a matter of months. That wa
 
 Solely responsible for the company's software stack: architecture, development, integrations, deployments and operation of the 8 systems in this repository. Also responsible for mentoring an intern (see [Dinner Room](projects/sala-cenas.md)).
 
-- 🌐 Portfolio: *(link pending — `three-js-portfolio`)*
+- 🌐 Portfolio: [aglwences.dev](https://aglwences.dev)
 - 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
 - 🐙 GitHub: [@aleglope](https://github.com/aleglope)
 
