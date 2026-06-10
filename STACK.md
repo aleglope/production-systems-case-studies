@@ -1,114 +1,116 @@
-# Stack y competencias técnicas
+<p align="right"><a href="STACK.es.md">🇪🇸 Versión en español</a></p>
 
-Competencias demostradas a lo largo del ecosistema, con el **proyecto que las evidencia**. No es una lista de tecnologías "vistas una vez": cada entrada está respaldada por un sistema en producción o un PoC funcional.
+# Stack & technical skills
+
+Skills demonstrated across the ecosystem, each with the **project that evidences it**. This is not a list of technologies "touched once": every entry is backed by a production system or a working PoC.
 
 ---
 
 ## Frontend
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **Next.js App Router** (v14, v15, v16) | Todos los proyectos web. Manejo de *breaking changes* de Next 16 (`proxy.ts` en lugar de `middleware.ts`) documentado en Inscripción Online y LogiTasks |
-| **React 18 / 19** (Server Components + Server Actions) | Inscripción Online, BadgeFlow, LogiTasks |
-| **3D en web** — React Three Fiber, drei, Rapier (física), Three.js, leva | Kiosco 3D con física de *lanyard* (BadgeFlow); editor de salas 3D (Sala de Cenas); portfolio (three-js-portfolio) |
-| **Canvas 2D** — Konva / react-konva | Plano interactivo de mesas (Sala de Cenas) |
-| **PWA / offline-first** — Serwist, Service Workers, IndexedDB | BadgeFlow (kiosco sin red), Beacon Attendance (PWA de asistente) |
-| **UI** — Tailwind CSS 4, shadcn/ui, Radix, Ant Design, Chakra UI | Transversal |
-| **i18n** — next-intl, 6 locales con traducción LLM multi-proveedor | Inscripción Online |
-| **Estado de servidor** — TanStack Query (mutaciones optimistas) | LogiTasks |
+| **Next.js App Router** (v14, v15, v16) | Every web project. Handling Next 16 breaking changes (`proxy.ts` replacing `middleware.ts`) documented in Online Registration and LogiTasks |
+| **React 18 / 19** (Server Components + Server Actions) | Online Registration, BadgeFlow, LogiTasks |
+| **3D on the web** — React Three Fiber, drei, Rapier (physics), Three.js, leva | 3D kiosk with lanyard physics (BadgeFlow); 3D room editor (Dinner Room); portfolio (three-js-portfolio) |
+| **2D canvas** — Konva / react-konva | Interactive table floor plan (Dinner Room) |
+| **PWA / offline-first** — Serwist, Service Workers, IndexedDB | BadgeFlow (kiosk with no network), Beacon Attendance (attendee PWA) |
+| **UI** — Tailwind CSS 4, shadcn/ui, Radix, Ant Design, Chakra UI | Cross-cutting |
+| **i18n** — next-intl, 6 locales with LLM multi-provider translation | Online Registration |
+| **Server state** — TanStack Query (optimistic mutations) | LogiTasks |
 
 ---
 
 ## Backend
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **NestJS** (v10, v11) — REST, WebSocket, SSE, GraphQL, guards, cron | BadgeFlow (41 *endpoints*), AudioNow, Congress Translation, Beacon Attendance |
-| **Next.js Server Actions** como capa de backend | Inscripción Online (56 *actions*), LogiTasks |
-| **Renderizado servidor** — Puppeteer (Chrome headless), generación PNG/PDF a escala 3× | BadgeFlow |
-| **Generación de documentos** — jsPDF, ExcelJS | Inscripción Online, Programa-Web |
-| **Procesos largos / workers** — worker externo en Docker, polling de cola | Sala de Cenas (importador de planos), Inscripción Online (Vercel Cron) |
+| **NestJS** (v10, v11) — REST, WebSocket, SSE, GraphQL, guards, cron | BadgeFlow (41 endpoints), AudioNow, Congress Translation, Beacon Attendance |
+| **Next.js Server Actions** as the backend layer | Online Registration (56 actions), LogiTasks |
+| **Server-side rendering to media** — Puppeteer (headless Chrome), PNG/PDF generation at 3× scale | BadgeFlow |
+| **Document generation** — jsPDF, ExcelJS | Online Registration, Programa-Web |
+| **Long-running jobs / workers** — external Docker worker, queue polling | Dinner Room (floor-plan importer), Online Registration (Vercel Cron) |
 
 ---
 
-## Datos
+## Data
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **PostgreSQL** — diseño relacional, *single-table design*, índices parciales, *constraints* | Transversal |
-| **Supabase** — RLS, Realtime, Auth, Storage, RPC `SECURITY DEFINER`, triggers | AudioNow (20 tablas, 77 funciones/triggers), LogiTasks, Sala de Cenas |
-| **Drizzle ORM** | Inscripción Online (31 tablas) |
+| **PostgreSQL** — relational design, single-table design, partial indexes, constraints | Cross-cutting |
+| **Supabase** — RLS, Realtime, Auth, Storage, `SECURITY DEFINER` RPCs, triggers | AudioNow (20 tables, 77 functions/triggers), LogiTasks, Dinner Room |
+| **Drizzle ORM** | Online Registration (31 tables) |
 | **Prisma ORM** (v5, v6) | BadgeFlow, AudioNow, Congress Translation |
-| **DynamoDB** — *single-table* con GSIs, TTL | Beacon Attendance |
-| **Redis** — Upstash / ElastiCache: cache, rate limit, pub/sub, *single-flight token cache* | Inscripción Online, Programa-Web, Beacon Attendance |
-| **Migraciones** — versionadas, con *gates* destructivos por flag | Inscripción Online (31 migraciones), AudioNow (76) |
+| **DynamoDB** — single-table with GSIs, TTL | Beacon Attendance |
+| **Redis** — Upstash / ElastiCache: cache, rate limiting, pub/sub, single-flight token cache | Online Registration, Programa-Web, Beacon Attendance |
+| **Migrations** — versioned, with destructive-change feature-flag gates | Online Registration (31 migrations), AudioNow (76) |
 
 ---
 
-## Tiempo real y streaming
+## Real-time & streaming
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **LiveKit** (WebRTC SFU) — `@livekit/rtc-node`, *bot* server-side, DataChannel | AudioNow, Congress Translation |
-| **Procesamiento de audio** — *resampling* PCM, soft-knee limiter (tanh), chunk smoothing | AudioNow |
-| **Supabase Realtime** — suscripciones a cambios de tabla | LogiTasks, Sala de Cenas |
-| **Pipelines IoT** — MQTT/TLS → AWS IoT Core → Kinesis → Lambda, latencia <500 ms | Beacon Attendance |
+| **LiveKit** (WebRTC SFU) — `@livekit/rtc-node`, server-side bots, DataChannel | AudioNow, Congress Translation |
+| **Audio processing** — PCM resampling, soft-knee limiter (tanh), chunk smoothing | AudioNow |
+| **Supabase Realtime** — table-change subscriptions | LogiTasks, Dinner Room |
+| **IoT pipelines** — MQTT/TLS → AWS IoT Core → Kinesis → Lambda, <500 ms latency | Beacon Attendance |
 
 ---
 
-## Integraciones de IA
+## AI integrations
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **Traducción *speech-to-speech*** — Palabra.ai, Azure Live Interpreter v2, OpenAI Realtime API, Google Gemini Live, Grok | AudioNow (producción), Congress Translation (7 proveedores conmutables) |
-| **Visión + OCR** — GPT-4.1 para importación de planos, con OpenCV / Tesseract / PaddleOCR de respaldo | Sala de Cenas |
-| **Traducción de texto LLM** — cadena multi-proveedor con *fallback* (OpenAI → Google → Anthropic) | Inscripción Online (i18n) |
-| **Patrones de robustez LLM** — *watchdog timeouts*, anti-alucinación, renovación proactiva de sesión, *voice cloning* zero-shot | Congress Translation |
+| **Speech-to-speech translation** — Palabra.ai, Azure Live Interpreter v2, OpenAI Realtime API, Google Gemini Live, Grok | AudioNow (production), Congress Translation (7 switchable providers) |
+| **Vision + OCR** — GPT-4.1 for floor-plan import, with OpenCV / Tesseract / PaddleOCR fallback | Dinner Room |
+| **LLM text translation** — multi-provider chain with fallback (OpenAI → Google → Anthropic) | Online Registration (i18n) |
+| **LLM robustness patterns** — watchdog timeouts, anti-hallucination, proactive session renewal, zero-shot voice cloning | Congress Translation |
 
 ---
 
-## Algoritmos y sistemas
+## Algorithms & systems
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **Filtrado de señal** — filtro de Kalman para suavizar RSSI (-27 % ruido) | Beacon Attendance |
-| **Máquinas de estados** — detección de presencia con histéresis (4 estados, umbrales -70/-80 dBm) | Beacon Attendance |
-| **Idempotencia** — reintentos de pago con `id_intento`, *find-or-create* en cola FileMaker | Inscripción Online |
-| **Concurrencia** — *singleton* de navegador con recuperación, mutex anti-zombie en sesiones de traducción | BadgeFlow, AudioNow |
+| **Signal filtering** — Kalman filter for RSSI smoothing (-27% noise) | Beacon Attendance |
+| **State machines** — presence detection with hysteresis (4 states, -70/-80 dBm thresholds) | Beacon Attendance |
+| **Idempotency** — payment retries via `id_intento`, find-or-create in the FileMaker queue | Online Registration |
+| **Concurrency** — browser singleton with recovery, anti-zombie mutex on translation sessions | BadgeFlow, AudioNow |
 
 ---
 
-## Infraestructura y DevOps
+## Infrastructure & DevOps
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **Vercel** — despliegue de Next.js, Cron, *environment variables* | 8 proyectos desplegados |
-| **Railway** — backend NestJS en Docker, PostgreSQL gestionado | BadgeFlow, AudioNow |
+| **Vercel** — Next.js deployments, Cron, environment management | 8 projects deployed |
+| **Railway** — NestJS backend in Docker, managed PostgreSQL | BadgeFlow, AudioNow |
 | **AWS CDK** (IaC) — VPC, DynamoDB, ElastiCache, SQS, Lambda, ECS Fargate, Cognito, WAF | Beacon Attendance |
-| **Docker** — *builds* multi-stage con Chromium, workers como contenedor | BadgeFlow, Sala de Cenas |
-| **CI/CD** — GitHub Actions (lint, typecheck, test, E2E Playwright, carga Artillery, CDK synth) | Beacon Attendance, varios |
-| **App de escritorio** — instalador Windows con GitHub Actions (impresión silenciosa) | BadgeFlow |
+| **Docker** — multi-stage builds with Chromium, workers as containers | BadgeFlow, Dinner Room |
+| **CI/CD** — GitHub Actions (lint, typecheck, test, Playwright E2E, Artillery load, CDK synth) | Beacon Attendance, others |
+| **Desktop app** — Windows installer via GitHub Actions (silent printing) | BadgeFlow |
 
 ---
 
-## Pagos, seguridad y cumplimiento
+## Payments, security & compliance
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **TPV Redsys** — firma HMAC-SHA256, webhook server-to-server, idempotencia | Inscripción Online |
-| **Autenticación** — `iron-session`, OTP passwordless (Twilio Verify / Resend), bcrypt + pepper, sesión dual | Inscripción Online |
-| **Autorización** — RLS, RPC `SECURITY DEFINER` + trigger `BEFORE UPDATE`, jerarquía de roles 3-tier | AudioNow, LogiTasks |
-| **Rate limiting / anti-abuso** — Upstash, *circuit breaker*, validación de *magic bytes* en uploads | Inscripción Online, BadgeFlow, Beacon Attendance |
-| **Privacidad** — reglas anti-suplantación, fences de datos (no exponer NIF), `audit_log` | Inscripción Online |
+| **Redsys payment gateway** — HMAC-SHA256 signing, server-to-server webhook, idempotency | Online Registration |
+| **Authentication** — `iron-session`, passwordless OTP (Twilio Verify / Resend), bcrypt + pepper, dual session | Online Registration |
+| **Authorization** — RLS, `SECURITY DEFINER` RPC + `BEFORE UPDATE` trigger, 3-tier role hierarchy | AudioNow, LogiTasks |
+| **Rate limiting / anti-abuse** — Upstash, circuit breaker, magic-byte validation on uploads | Online Registration, BadgeFlow, Beacon Attendance |
+| **Privacy** — anti-impersonation rules, data fences (never expose tax IDs), `audit_log` | Online Registration |
 
 ---
 
-## Metodología
+## Methodology
 
-| Competencia | Evidencia |
+| Skill | Evidence |
 |---|---|
-| **Desarrollo *AI-augmented*** — Claude Code con planificación por fases (GSD) | Transversal (`.planning/` en todos los repos) |
-| **Verificación goal-backward** — `VERIFICATION.md` por fase | Inscripción Online, BadgeFlow, AudioNow, Congress Translation |
-| **TDD / tests** — Vitest, Jest, Testing Library; 881 tests (Inscripción), 366+ archivos (Beacon) | Inscripción Online, Beacon Attendance |
-| **Documentación técnica** — specs, ADRs informales, diagramas Mermaid | Transversal |
-| **Mentoría** — formación de un becario en IA y librerías 3D | Sala de Cenas |
+| **AI-augmented development** — Claude Code with phase-based planning (GSD) | Cross-cutting (`.planning/` in every repo) |
+| **Goal-backward verification** — `VERIFICATION.md` per phase | Online Registration, BadgeFlow, AudioNow, Congress Translation |
+| **TDD / testing** — Vitest, Jest, Testing Library; 881 tests (Registration), 366+ files (Beacon) | Online Registration, Beacon Attendance |
+| **Technical writing** — specs, informal ADRs, Mermaid diagrams | Cross-cutting |
+| **Mentorship** — trained an intern in AI tooling and 3D libraries | Dinner Room |

@@ -1,96 +1,98 @@
+<p align="right"><a href="badgeflow.es.md">🇪🇸 Versión en español</a></p>
+
 # BadgeFlow
 
-> Sistema completo para generar, gestionar e imprimir credenciales personalizadas de asistentes a congresos, con un **kiosco 3D** de autoservicio y modo **offline-first**. En producción en un congreso médico real.
+> End-to-end system to generate, manage and print personalized attendee badges for congresses, with a self-service **3D kiosk** and an **offline-first** mode. In production at a real medical congress.
 
 ---
 
-## Contexto y problema
+## Context & problem
 
-En un congreso, la acreditación es el primer cuello de botella: cientos de asistentes llegan a la vez y necesitan su credencial física impresa **al instante**. El proceso manual genera colas y errores.
+At a congress, accreditation is the first bottleneck: hundreds of attendees arrive at once and need their physical badge printed **instantly**. The manual process creates queues and errors.
 
-Además, los datos de los asistentes viven en **dos fuentes distintas** según el evento — un directorio externo (Helice) y la base FileMaker interna — y cada congreso usa convenciones de campo diferentes (p. ej. qué columna contiene el DNI/pasaporte). El sistema tenía que **unificar ambas fuentes** y funcionar **aunque se cayera internet** en el recinto.
+On top of that, attendee data lives in **two different sources** depending on the event — an external directory (Helice) and the internal FileMaker database — and every congress uses different field conventions (e.g. which column holds the ID/passport). The system had to **unify both sources** and keep working **even if the venue's internet went down**.
 
 ---
 
-## Solución y arquitectura
+## Solution & architecture
 
-Un asistente escanea su QR en el kiosco → aparece una **animación 3D de bienvenida** con su nombre → su credencial se **imprime automáticamente**. Sin colas, sin esperas.
+An attendee scans their QR at the kiosk → a **3D welcome animation** appears with their name → their badge **prints automatically**. No queues, no waiting.
 
 ```mermaid
 flowchart LR
-    HEL[("Helice API")] --> SYNC["Sync Service<br/>conciliación multi-fuente"]
-    FM[("FileMaker DAPI<br/>solo lectura")] --> SYNC
+    HEL[("Helice API")] --> SYNC["Sync Service<br/>multi-source reconciliation"]
+    FM[("FileMaker DAPI<br/>read-only")] --> SYNC
     SYNC --> PG[("PostgreSQL<br/>Prisma · Badge · Design · SyncLog")]
-    PG --> PUP["Puppeteer<br/>HTML → PNG/PDF · escala 3×"]
+    PG --> PUP["Puppeteer<br/>HTML → PNG/PDF · 3× scale"]
 
     PUP --> API["REST API · NestJS 11<br/>41 endpoints"]
-    API --> KIOSK["/badge · Kiosco PWA<br/>máquina de 7 estados · R3F + Rapier"]
-    API --> SEC["/secretaria<br/>buscar + reimprimir"]
-    API --> PANEL["/panel · Admin<br/>diseños · sync · estadísticas"]
+    API --> KIOSK["/badge · PWA kiosk<br/>7-state machine · R3F + Rapier"]
+    API --> SEC["/secretaria<br/>search + reprint"]
+    API --> PANEL["/panel · Admin<br/>designs · sync · stats"]
 
-    KIOSK -. "Service Worker Serwist" .-> CACHE[("Cache + IndexedDB<br/>opera sin red")]
+    KIOSK -. "Serwist Service Worker" .-> CACHE[("Cache + IndexedDB<br/>works with no network")]
 
     style PG fill:#065f46,color:#fff
     style FM fill:#1f2937,color:#fff
     style HEL fill:#1f2937,color:#fff
 ```
 
-El **kiosco** es una máquina de estados (`IDLE → QR escaneado → bienvenida → transición 3D/vídeo → preview → impresión`) renderizada con **React Three Fiber + Rapier**, con la credencial colgando de un *lanyard* con física real. La **PWA** precarga con Serwist los PNG y vídeos en *cache*, y guarda en IndexedDB una cola de acciones (marcar como impreso) que sincroniza cuando vuelve la conexión.
+The **kiosk** is a state machine (`IDLE → QR scanned → welcome → 3D/video transition → preview → printing`) rendered with **React Three Fiber + Rapier**, the badge hanging from a lanyard with real physics. The **PWA** pre-caches PNGs and videos with Serwist, and stores an action queue in IndexedDB (mark-as-printed) that syncs back when the connection returns.
 
 ---
 
-## Stack y decisiones técnicas
+## Stack & technical decisions
 
-| Tecnología | Decisión | Por qué |
+| Technology | Decision | Why |
 |---|---|---|
-| **Puppeteer 24** | *Singleton* de navegador con recuperación de *zombies* y *batch* de concurrencia configurable (default 1) | Railway limita a 1 GB de RAM: un solo Chrome headless a la vez, con *health-check* que reinicia si queda inconsistente |
-| **Generación a escala 3×** | Renderizar HTML → PNG/PDF a triple resolución | Calidad de impresión física nítida partiendo de plantillas HTML/CSS |
-| **FileMaker solo lectura + multi-tenant** | Campo DNI configurable por diseño (`fmDniFieldName`) | Cada congreso usa un campo distinto; se cambia sin tocar código |
-| **Conciliación Helice ↔ FileMaker** | 3 índices (`byEmail`, `byQrtoken`, `byInscripcion`) sobre el mismo *mapping* | El origen del dato del QR varía según configuración; recomputar no resetea credenciales ya generadas |
-| **Serwist 9 (PWA)** | *Offline-first* con cache de assets + cola en IndexedDB | El kiosco debe seguir imprimiendo si se cae la red del recinto |
-| **App de escritorio Windows** | Instalador publicado vía GitHub Actions para impresión silenciosa | La impresión automática sin diálogos requiere un *host* nativo en el PC del kiosco |
+| **Puppeteer 24** | Browser singleton with zombie recovery and configurable batch concurrency (default 1) | Railway caps RAM at 1 GB: a single headless Chrome at a time, with a health check that restarts it if it goes inconsistent |
+| **3× scale generation** | Render HTML → PNG/PDF at triple resolution | Crisp physical print quality from HTML/CSS templates |
+| **Read-only FileMaker + multi-tenant** | Per-design configurable ID field (`fmDniFieldName`) | Every congress uses a different field; it changes without touching code |
+| **Helice ↔ FileMaker reconciliation** | 3 indexes (`byEmail`, `byQrtoken`, `byInscripcion`) over the same mapping | The QR data source varies by configuration; recomputing never resets already-generated badges |
+| **Serwist 9 (PWA)** | Offline-first with asset cache + IndexedDB queue | The kiosk must keep printing if the venue's network drops |
+| **Windows desktop app** | Installer published via GitHub Actions for silent printing | Dialog-free automatic printing requires a native host on the kiosk PC |
 
 ---
 
-## Retos técnicos resueltos
+## Solved technical challenges
 
-- ***Self-heal* de almacenamiento.** Railway usa contenedores efímeros: cada *redeploy* borra `/storage`. Si una petición de PNG no encuentra el archivo, **se regenera bajo demanda** y se vuelve a cachear.
-- **Generación masiva con progreso y cancelación.** Generar ~2000 credenciales tarda más de una hora: un `Map` de progreso + *endpoint* de *polling* + flag de cancelación que cada *worker* comprueba dan *feedback* real y permiten abortar.
-- **Validación sin dependencias.** Lectura de dimensiones de imagen leyendo cabeceras PNG/JPEG (rechaza fondos < 600 px) y *sniffing* de *magic bytes* en *uploads* de vídeo (MP4/WebM) para no fiarse del `Content-Type`.
-- **Sincronización de estado offline.** El kiosco imprime sin red y, al reconectar, concilia qué credenciales quedaron marcadas como impresas.
-
----
-
-## Personalización sin código y app de escritorio
-
-Dos piezas convierten BadgeFlow en una herramienta que **el equipo opera de forma autónoma**, sin tocar código:
-
-### Editor visual de diseños
-Desde `/panel/designs` el equipo crea y edita cada modelo de credencial:
-- **Origen de datos por diseño** — selecciona la base FileMaker (`fm-database-select`) y el campo de documento (DNI/pasaporte) de cada congreso.
-- **Maquetación física** — colores, fondos, títulos y textos de la credencial, posicionados en coordenadas reales (mm) para una impresión exacta.
-- **Editor del kiosco** (`kiosk-editor`, por diseño) — configura toda la experiencia de autoservicio: **vídeos** de bienvenida y de transición, **tema** (colores y fondo), títulos y textos, el tipo de **transición 3D** y el propio **lanyard**. El equipo cambia el "tema" de cada congreso **sin desplegar nada**.
-
-### Experiencia 3D del kiosco
-La animación combina varias librerías y componentes propios:
-- **`badge-lanyard-3d`** — la credencial cuelga de un cordón con **física real** (React Three Fiber + Rapier).
-- **`ripple-grid`** — fondo animado por *shader*.
-- **`scan-transition-3d`** — transición 3D al escanear el QR.
-- **`scene-3d-fallback`** — degradación elegante si el equipo del congreso no dispone de WebGL.
-
-### App de escritorio — impresión silenciosa
-Un cliente **Electron para Windows** (carpeta `desktop/`) ejecuta el kiosco a pantalla completa e imprime **sin los diálogos del navegador**: el asistente escanea y la credencial sale directa a la impresora predeterminada. Se empaqueta con **`electron-builder`** como instalador **portable + NSIS** (`pack:win`), con la URL de la app incrustada en el build. Modo kiosco y URL configurables (`BADGEFLOW_DESKTOP_APP_URL`, `BADGEFLOW_KIOSK`).
+- **Storage self-healing.** Railway uses ephemeral containers: every redeploy wipes `/storage`. If a PNG request misses the file, it is **regenerated on demand** and re-cached.
+- **Mass generation with progress and cancellation.** Generating ~2,000 badges takes over an hour: a progress `Map` + a polling endpoint + a cancellation flag checked by every worker give real feedback and allow aborting.
+- **Dependency-free validation.** Image dimensions are read straight from PNG/JPEG headers (backgrounds under 600 px are rejected) and video uploads are magic-byte sniffed (MP4/WebM) instead of trusting `Content-Type`.
+- **Offline state synchronization.** The kiosk prints with no network and, on reconnect, reconciles which badges were marked as printed.
 
 ---
 
-## Resultado e impacto
+## No-code customization and the desktop app
 
-- **En producción en un congreso médico nacional real** (especialidad de cardiología): generación de credenciales, conciliación multi-fuente, experiencia 3D en kiosco e impresión física, con 1 kiosco + 2 PCs de secretaría.
-- **Métricas:** 41 *endpoints* REST · 3 modelos Prisma · arquitectura *backend* (NestJS) + *frontend* (Next.js 16) en monorepo · despliegue **Vercel** (web) + **Railway** (API en Docker con Chromium) + PostgreSQL gestionado.
-- Ciclo de mejora post-evento gestionado como *backlog* priorizado de peticiones del cliente.
+Two pieces turn BadgeFlow into a tool **the team operates autonomously**, without touching code:
+
+### Visual design editor
+From `/panel/designs` the team creates and edits every badge model:
+- **Per-design data source** — selects the FileMaker database (`fm-database-select`) and the document field (ID/passport) for each congress.
+- **Physical layout** — colors, backgrounds, titles and badge text, positioned in real-world coordinates (mm) for exact printing.
+- **Kiosk editor** (`kiosk-editor`, per design) — configures the entire self-service experience: welcome and transition **videos**, **theme** (colors and background), titles and copy, the **3D transition** type and the lanyard itself. The team re-themes each congress **without deploying anything**.
+
+### The kiosk's 3D experience
+The animation combines several libraries and custom components:
+- **`badge-lanyard-3d`** — the badge hangs from a lanyard with **real physics** (React Three Fiber + Rapier).
+- **`ripple-grid`** — shader-animated background.
+- **`scan-transition-3d`** — 3D transition on QR scan.
+- **`scene-3d-fallback`** — graceful degradation when the congress hardware lacks WebGL.
+
+### Desktop app — silent printing
+An **Electron client for Windows** (`desktop/` folder) runs the kiosk full-screen and prints **without browser dialogs**: the attendee scans and the badge goes straight to the default printer. It is packaged with **`electron-builder`** as a **portable + NSIS** installer (`pack:win`), with the app URL embedded at build time. Kiosk mode and URL are configurable (`BADGEFLOW_DESKTOP_APP_URL`, `BADGEFLOW_KIOSK`).
 
 ---
 
-## Competencias demostradas
+## Outcome & impact
 
-`NestJS 11` · `Next.js 16` · `Puppeteer` · `React Three Fiber + Rapier` · `PWA / Serwist` · `IndexedDB offline` · `Prisma` · `PostgreSQL` · `FileMaker Data API` · `Helice API` · `Docker + Railway` · `GitHub Actions (desktop release)` · `impresión física` · `Electron (app de escritorio)` · `electron-builder (instalador Windows)` · `editor visual no-code` · `shaders / GLSL`
+- **In production at a real national medical congress** (cardiology specialty): badge generation, multi-source reconciliation, 3D kiosk experience and physical printing, with 1 kiosk + 2 secretary PCs.
+- **Metrics:** 41 REST endpoints · 3 Prisma models · backend (NestJS) + frontend (Next.js 16) monorepo · deployed on **Vercel** (web) + **Railway** (Dockerized API with Chromium) + managed PostgreSQL.
+- Post-event improvement cycle managed as a prioritized client-request backlog.
+
+---
+
+## Skills demonstrated
+
+`NestJS 11` · `Next.js 16` · `Puppeteer` · `React Three Fiber + Rapier` · `PWA / Serwist` · `offline IndexedDB` · `Prisma` · `PostgreSQL` · `FileMaker Data API` · `Helice API` · `Docker + Railway` · `GitHub Actions (desktop release)` · `physical printing` · `Electron (desktop app)` · `electron-builder (Windows installer)` · `no-code visual editor` · `shaders / GLSL`

@@ -1,32 +1,34 @@
+<p align="right"><a href="programa-web.es.md">🇪🇸 Versión en español</a></p>
+
 # Programa-Web
 
-> Generador del programa de un congreso: lee las sesiones directamente de **FileMaker** (en modo **estrictamente solo lectura**) y renderiza un esquema/**Gantt** visual exportable a **PDF**, con un *fallback* resiliente si la API cae.
+> Congress program generator: it reads sessions straight from **FileMaker** (in **strictly read-only** mode) and renders a visual **Gantt** schedule exportable to **PDF**, with a resilient fallback if the API goes down.
 
 ---
 
-## Contexto y problema
+## Context & problem
 
-El programa de un congreso (sesiones, ponencias, salas, horarios) vive en FileMaker, que el equipo interno mantiene. Necesitaban generar el **documento visual del programa** — un Gantt limpio, paginado, listo para imprimir — **sin sacar los datos de FileMaker** ni arriesgarse a modificarlos por accidente.
+A congress program (sessions, talks, rooms, schedules) lives in FileMaker, maintained by the internal team. They needed to generate the **visual program document** — a clean, paginated, print-ready Gantt — **without moving the data out of FileMaker** and with zero risk of accidentally modifying it.
 
-La restricción central: la integración debía ser **incapaz de escribir** en FileMaker, y el sistema debía seguir funcionando aunque la Data API estuviera caída el día del congreso.
+The central constraint: the integration had to be **incapable of writing** to FileMaker, and the system had to keep working even if the Data API was down on congress day.
 
 ---
 
-## Solución y arquitectura
+## Solution & architecture
 
-Un trabajador pulsa un botón **dentro de FileMaker**, que abre esta app con el `?evento=<Id>` en la URL. La app resuelve las sesiones contra la FileMaker Data API en modo solo lectura, las cachea y renderiza el Gantt exportable a PDF.
+A staff member presses a button **inside FileMaker**, which opens this app with `?evento=<Id>` in the URL. The app resolves the sessions against the FileMaker Data API in read-only mode, caches them and renders the PDF-exportable Gantt.
 
 ```mermaid
 flowchart LR
-    BTN["Botón en FileMaker"] -- "?evento=Id" --> APP["Next.js 15 · App Router"]
-    APP --> API["/api/sesiones · RSC server-side"]
-    API --> FMRO["fmReadOnly.find<br/>firewall de tipos · solo lectura"]
+    BTN["Button in FileMaker"] -- "?evento=Id" --> APP["Next.js 15 · App Router"]
+    APP --> API["/api/sesiones · server-side RSC"]
+    API --> FMRO["fmReadOnly.find<br/>type firewall · read-only"]
     FMRO --> FM[("FileMaker Data API")]
     API --> CACHE[("Upstash Redis<br/>single-flight token cache")]
-    API --> GANTT["Render Gantt · V1/V4"]
-    GANTT --> PDF["Exportar PDF"]
+    API --> GANTT["Gantt render · V1/V4"]
+    GANTT --> PDF["Export PDF"]
 
-    FM -. "si la API cae" .-> CSV["Fallback:<br/>subir CSV exportado a mano"]
+    FM -. "if the API is down" .-> CSV["Fallback:<br/>manual CSV upload"]
     CSV --> GANTT
 
     style FM fill:#1f2937,color:#fff
@@ -35,35 +37,35 @@ flowchart LR
 
 ---
 
-## Stack y decisiones técnicas
+## Stack & technical decisions
 
-| Tecnología | Decisión | Por qué |
+| Technology | Decision | Why |
 |---|---|---|
-| **FileMaker Data API solo lectura** | *Firewall* de tipos: el cliente solo expone operaciones de lectura | Hace **imposible** escribir en la base compartida, por diseño y no por convención |
-| **Upstash Redis** | *Single-flight token cache* + degradación elegante si Redis no está | El token de la Data API se reutiliza sin condiciones de carrera; si falla la cache, la app sigue |
-| **Fallback CSV** | Subida manual del CSV exportado por FileMaker | El día del evento el Gantt se genera aunque la Data API esté caída |
-| **Next.js 15 RSC** | La llamada a FileMaker ocurre en *Server Component* | Credenciales y lógica nunca llegan al navegador |
-| **TypeScript estricto + Vitest** | Tipado estricto y suite de tests con *mocks* de FileMaker | Confianza para integrar con un sistema legacy crítico |
+| **Read-only FileMaker Data API** | Type firewall: the client only exposes read operations | Makes writing to the shared database **impossible by design**, not by convention |
+| **Upstash Redis** | Single-flight token cache + graceful degradation if Redis is missing | The Data API token is reused with no race conditions; if the cache fails, the app keeps going |
+| **CSV fallback** | Manual upload of FileMaker's CSV export | On event day the Gantt gets generated even with the Data API down |
+| **Next.js 15 RSC** | The FileMaker call happens in a Server Component | Credentials and logic never reach the browser |
+| **Strict TypeScript + Vitest** | Strict typing and a test suite with FileMaker mocks | Confidence when integrating against a critical legacy system |
 
 ---
 
-## Retos técnicos resueltos
+## Solved technical challenges
 
-- **Integración segura con un sistema legacy crítico** — el patrón de *firewall* de solo lectura garantiza que un bug nunca pueda corromper la base operativa.
-- **Resiliencia para el día del evento** — doble camino (API en vivo + *fallback* CSV) y degradación elegante de la cache: el programa **siempre** se puede generar.
-- **Render Gantt paginado a PDF** — coordinación entre el esquema de sesiones y un layout imprimible.
-- **CORS *whitelist* + rate limiting** sobre el *endpoint* que FileMaker invoca.
-
----
-
-## Resultado e impacto
-
-- **En producción**, integrado en el flujo real del equipo (botón nativo en FileMaker → PDF del programa).
-- **Métricas:** 57 tests Vitest (en verde) con *mocks* de FileMaker · TypeScript estricto · despliegue en **Vercel** · cache en Upstash Redis.
-- Documentación de diseño completa (spec + plan de implementación) siguiendo la metodología de desarrollo del ecosistema.
+- **Safe integration with a critical legacy system** — the read-only firewall pattern guarantees a bug can never corrupt the operational database.
+- **Event-day resilience** — dual path (live API + CSV fallback) and graceful cache degradation: the program can **always** be generated.
+- **Paginated Gantt-to-PDF rendering** — coordinating the session schema with a print-ready layout.
+- **CORS whitelist + rate limiting** on the endpoint FileMaker invokes.
 
 ---
 
-## Competencias demostradas
+## Outcome & impact
 
-`Next.js 15 (RSC)` · `FileMaker Data API` · `Upstash Redis` · `generación de PDF` · `diseño resiliente (fallback)` · `TypeScript estricto` · `Vitest` · `Vercel`
+- **In production**, embedded in the team's real workflow (native FileMaker button → program PDF).
+- **Metrics:** 57 Vitest tests (green) with FileMaker mocks · strict TypeScript · deployed on **Vercel** · Upstash Redis cache.
+- Complete design documentation (spec + implementation plan) following the ecosystem's development methodology.
+
+---
+
+## Skills demonstrated
+
+`Next.js 15 (RSC)` · `FileMaker Data API` · `Upstash Redis` · `PDF generation` · `resilient design (fallback)` · `strict TypeScript` · `Vitest` · `Vercel`

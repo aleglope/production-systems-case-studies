@@ -1,16 +1,18 @@
-# Casos de estudio
+<p align="right"><a href="README.es.md">🇪🇸 Versión en español</a></p>
 
-Cada documento sigue la misma estructura: **contexto y problema → solución y arquitectura → stack y decisiones → retos resueltos → resultado e impacto → competencias**.
+# Case studies
 
-| # | Proyecto | Una línea |
+Every document follows the same structure: **context & problem → solution & architecture → stack & decisions → solved challenges → outcome & impact → skills**.
+
+| # | Project | One-liner |
 |---|---|---|
-| 1 | [Inscripción Online v2](inscripcion-online.md) | Inscripción y pago online multi-evento para congresos médicos, con sincronización aditiva a FileMaker |
-| 2 | [BadgeFlow](badgeflow.md) | Generación e impresión de credenciales con kiosco 3D y modo offline |
-| 3 | [AudioNow](audionow.md) | Streaming de audio multilingüe en tiempo real con traducción por IA |
-| 4 | [Beacon Attendance](beacon-attendance.md) | Asistencia automática por *beacons* BLE sobre una pipeline AWS IoT |
-| 5 | [Congress Translation](congress-translation.md) | Traducción de voz simultánea para ponencias, multi-proveedor de IA |
-| 6 | [Programa-Web](programa-web.md) | Generador del programa del congreso desde FileMaker (Gantt → PDF) |
-| 7 | [LogiTasks](logitasks.md) | Gestor interno de peticiones priorizadas por votación del equipo |
-| 8 | [Sala de Cenas](sala-cenas.md) | Plano interactivo 2D/3D de reservas (proyecto de mentoría) |
+| 1 | [Online Registration v2](inscripcion-online.md) | Multi-event online registration and payments for medical congresses, with additive sync to FileMaker |
+| 2 | [BadgeFlow](badgeflow.md) | Badge generation and printing with a 3D kiosk and offline mode |
+| 3 | [AudioNow](audionow.md) | Real-time multilingual audio streaming with AI translation |
+| 4 | [Beacon Attendance](beacon-attendance.md) | Automatic attendance via BLE beacons over an AWS IoT pipeline |
+| 5 | [Congress Translation](congress-translation.md) | Simultaneous voice translation for talks, multi-AI-provider |
+| 6 | [Programa-Web](programa-web.md) | Congress program generator from FileMaker (Gantt → PDF) |
+| 7 | [LogiTasks](logitasks.md) | Internal request manager prioritized by team voting |
+| 8 | [Dinner Room](sala-cenas.md) | Interactive 2D/3D reservation floor plan (mentorship project) |
 
-> **Nota sobre confidencialidad.** Los nombres de asociaciones y congresos cliente se han sustituido por descriptores genéricos (p. ej. "congreso nacional de cardiología"). No se incluyen credenciales, dominios internos, URLs de producción ni datos de asistentes reales.
+> **Confidentiality note.** Client association and congress names have been replaced with generic descriptors (e.g. "national cardiology congress"). No credentials, internal domains, production URLs or real attendee data are included.

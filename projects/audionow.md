@@ -1,32 +1,34 @@
+<p align="right"><a href="audionow.es.md">🇪🇸 Versión en español</a></p>
+
 # AudioNow
 
-> Plataforma de transmisión de audio multilingüe en tiempo real para eventos profesionales: captura el audio del técnico de sala, lo **traduce con IA** *speech-to-speech* y lo distribuye por WebRTC a oyentes en cualquier idioma. En producción sirviendo eventos reales.
+> Real-time multilingual audio streaming platform for professional events: it captures the room technician's audio, **translates it with AI** speech-to-speech and distributes it over WebRTC to listeners in any language. In production serving real events.
 
 ---
 
-## Contexto y problema
+## Context & problem
 
-En un congreso con interpretación simultánea, el audio traducido debe llegar a **decenas o cientos de oyentes** en su idioma, en su propio móvil, **sin instalar nada y sin registrarse**. El reto técnico no es solo traducir: es hacerlo con **baja latencia, sin distorsión, para N idiomas a la vez**, y con un coste que no se dispare con el número de oyentes.
+At a congress with simultaneous interpretation, translated audio must reach **dozens or hundreds of listeners** in their language, on their own phone, **with nothing to install and no sign-up**. The technical challenge isn't just translating: it's doing it with **low latency, no distortion, for N languages at once**, and at a cost that doesn't explode with the listener count.
 
 ---
 
-## Solución y arquitectura
+## Solution & architecture
 
-El audio del técnico entra en una sala **LiveKit** (WebRTC SFU); un *bot* server-side se suscribe, reenvía el PCM a **Palabra.ai** para traducción *speech-to-speech*, y republica el audio traducido como una pista por idioma. Los oyentes acceden por una URL pública y eligen su idioma; el SFU hace el *fan-out* a todos ellos desde una sola pista (el coste es por sesión de traducción, no por oyente).
+The technician's audio enters a **LiveKit** room (WebRTC SFU); a server-side bot subscribes, forwards the PCM to **Palabra.ai** for speech-to-speech translation, and republishes the translated audio as one track per language. Listeners join through a public URL and pick their language; the SFU fans out to all of them from a single track (cost is per translation session, not per listener).
 
 ```mermaid
 flowchart LR
-    TEC["🎙️ Técnico de sala<br/>mic · display capture"] --> LK["LiveKit Room<br/>WebRTC SFU"]
+    TEC["🎙️ Room technician<br/>mic · display capture"] --> LK["LiveKit Room<br/>WebRTC SFU"]
     LK --> BOT["NestJS · LiveKitStreamManager<br/>resample PCM 16 kHz"]
-    BOT --> PAL["Palabra.ai<br/>traducción speech-to-speech"]
-    PAL --> MIX["Post-proceso<br/>gain · soft-knee limiter · chunk smoothing"]
+    BOT --> PAL["Palabra.ai<br/>speech-to-speech translation"]
+    PAL --> MIX["Post-processing<br/>gain · soft-knee limiter · chunk smoothing"]
     MIX --> LK
-    LK --> L1["👂 Oyente ES"]
-    LK --> L2["👂 Oyente EN"]
-    LK --> L3["👂 Oyente … N idiomas"]
+    LK --> L1["👂 Listener ES"]
+    LK --> L2["👂 Listener EN"]
+    LK --> L3["👂 Listener … N languages"]
 
-    BOT --> SUPA[("Supabase<br/>eventos · salas · permisos · RLS")]
-    BOT --> EMBED["Embed widget<br/>para webs externas"]
+    BOT --> SUPA[("Supabase<br/>events · rooms · permissions · RLS")]
+    BOT --> EMBED["Embed widget<br/>for external sites"]
 
     style SUPA fill:#065f46,color:#fff
     style PAL fill:#7c2d12,color:#fff
@@ -34,26 +36,26 @@ flowchart LR
 
 ---
 
-## Más allá del audio: plataforma de evento completa
+## Beyond audio: a full event platform
 
-La traducción es el núcleo, pero AudioNow es la **plataforma operativa del evento**. Sobre la misma base (NestJS + Supabase + LiveKit) conviven varios subsistemas ya programados:
+Translation is the core, but AudioNow is the **event's operations platform**. Several subsystems already live on the same foundation (NestJS + Supabase + LiveKit):
 
-- **Chat de control entre salas** — mensajería entre la organización y cada sala con tres vistas: *gestión* (`ChatManageView`), *monitorización* global (`ChatMonitorView`) y *participante* por sala (`ChatParticipantView`). Coordina a los técnicos de cada sala en directo, con notificaciones in-app.
-- **Vídeo del evento en directo** — streaming con dos vías: **Vimeo** (con un *proxy HLS* propio, `vimeo-hls-proxy`, que sirve el stream sin exponer credenciales) y **Agora** como alternativa. El oyente puede **ver la ponencia mientras escucha el audio traducido**.
-- **Grabación de sesiones** — módulo `recording` para registrar las sesiones del evento.
-- **Arquitectura de proveedor de traducción desacoplada, con dos motores reales** — una interfaz (`TranslationProviderInterface`) abstrae el motor de traducción. **Palabra.ai** corre en producción; **OpenAI Realtime** está implementado como segundo proveedor completo (módulo `openai-realtime` con tests unitarios), con **conmutación por evento** ya modelada en datos (`chat_events.translation_provider` + RPC + panel admin + *session log*) y **desplegado como *release* canary** (proyecto `audionow-canary`) para validarse en **producción con tráfico real controlado** antes de promoverlo a proveedor por defecto. La exploración de aún más motores (Azure, Gemini, Grok…) vive en el proyecto hermano **[Congress Translation](congress-translation.md)**.
+- **Cross-room control chat** — messaging between the organization and each room with three views: *management* (`ChatManageView`), global *monitoring* (`ChatMonitorView`) and per-room *participant* (`ChatParticipantView`). It coordinates room technicians live, with in-app notifications.
+- **Live event video** — streaming through two paths: **Vimeo** (with a custom *HLS proxy*, `vimeo-hls-proxy`, that serves the stream without exposing credentials) and **Agora** as an alternative. A listener can **watch the talk while hearing the translated audio**.
+- **Session recording** — a `recording` module to capture event sessions.
+- **Decoupled translation-provider architecture, with two real engines** — an interface (`TranslationProviderInterface`) abstracts the translation engine. **Palabra.ai** runs in production; **OpenAI Realtime** is implemented as a complete second provider (`openai-realtime` module with unit tests), with **per-event switching** already modeled in data (`chat_events.translation_provider` + RPC + admin panel + session log) and **deployed as a canary release** (`audionow-canary` project) to validate in **production with controlled real traffic** before promoting it to default provider. The exploration of even more engines (Azure, Gemini, Grok…) lives in the sister project **[Congress Translation](congress-translation.md)**.
 
-> Diagrama — subsistemas que conviven sobre la misma plataforma.
+> Diagram — subsystems coexisting on the same platform.
 
 ```mermaid
 flowchart TB
-    EV["Evento en directo"] --> AUD["Audio traducido<br/>LiveKit · Palabra.ai + OpenAI"]
-    EV --> VID["Vídeo en directo<br/>Vimeo · proxy HLS · Agora"]
-    EV --> CHAT["Chat de control<br/>gestión · monitor · participante"]
-    EV --> REC["Grabación de sesiones"]
-    AUD --> LIST["👂 Oyente<br/>escucha · ve · subtítulos"]
+    EV["Live event"] --> AUD["Translated audio<br/>LiveKit · Palabra.ai + OpenAI"]
+    EV --> VID["Live video<br/>Vimeo · HLS proxy · Agora"]
+    EV --> CHAT["Control chat<br/>manage · monitor · participant"]
+    EV --> REC["Session recording"]
+    AUD --> LIST["👂 Listener<br/>hears · watches · subtitles"]
     VID --> LIST
-    CHAT --> ORG["🛠️ Organización + técnicos de sala"]
+    CHAT --> ORG["🛠️ Organization + room technicians"]
 
     style AUD fill:#7c2d12,color:#fff
     style VID fill:#1e3a8a,color:#fff
@@ -61,38 +63,38 @@ flowchart TB
 
 ---
 
-## Stack y decisiones técnicas
+## Stack & technical decisions
 
-| Tecnología | Decisión | Por qué |
+| Technology | Decision | Why |
 |---|---|---|
-| **LiveKit (SFU) + bot server-side** | Un *bot* `@livekit/rtc-node` por sala que publica las pistas traducidas | El *fan-out* a N oyentes lo hace el SFU gratis; Palabra cobra por sesión, no por oyente |
-| **Soft-knee limiter (tanh)** | Sustituir el *clamp* duro por compresión asintótica `tanh` (umbral ~27000) | Aplicar ganancia 2,5× al TTS introducía *clipping* audible; el *soft-knee* es C¹-continuo y no distorsiona |
-| **Un cliente por (sala, idioma)** | Sesiones de traducción independientes por idioma | Paraleliza la traducción de N idiomas y aísla fallos; *mutex* anti-zombie evita sesiones huérfanas facturables |
-| **Permisos 3-tier + RPC `SECURITY DEFINER`** | `super_admin / admin / technician`; el estado de streaming solo se cambia vía RPC, con trigger `BEFORE UPDATE` que bloquea *updates* directos | Único camino auditable para arrancar/parar audio; reemplaza un `is_admin` booleano hardcodeado |
-| **RLS `TO public` para oyentes** | Acceso anónimo de solo lectura a eventos/salas públicas | Los oyentes no se registran; entran por URL pública |
-| **Chunk smoothing por dirección** | *Ramp* desde el último *sample* por cada dirección de traducción | En modo bidireccional (ES↔EN) evita *clicks* al concatenar *chunks* de streams concurrentes |
+| **LiveKit (SFU) + server-side bot** | One `@livekit/rtc-node` bot per room publishing the translated tracks | The SFU fans out to N listeners for free; Palabra charges per session, not per listener |
+| **Soft-knee limiter (tanh)** | Replace the hard clamp with asymptotic `tanh` compression (threshold ~27000) | Applying 2.5× gain to the TTS introduced audible clipping; the soft knee is C¹-continuous and doesn't distort |
+| **One client per (room, language)** | Independent translation sessions per language | Parallelizes N-language translation and isolates failures; an anti-zombie mutex prevents orphaned billable sessions |
+| **3-tier permissions + `SECURITY DEFINER` RPC** | `super_admin / admin / technician`; streaming state changes only through the RPC, with a `BEFORE UPDATE` trigger blocking direct updates | A single auditable path to start/stop audio; replaces a hardcoded `is_admin` boolean |
+| **RLS `TO public` for listeners** | Anonymous read-only access to public events/rooms | Listeners never sign up; they join via public URL |
+| **Per-direction chunk smoothing** | Ramp from each direction's last sample | In bidirectional mode (ES↔EN) it kills clicks when concatenating chunks from concurrent streams |
 
 ---
 
-## Retos técnicos resueltos
+## Solved technical challenges
 
-- **Calidad de audio sin distorsión** bajo ganancia agresiva, con limitador *soft-knee* que deja intactas las muestras nominales y solo comprime los picos.
-- **Anti-zombie en sesiones de traducción.** Dos `addLanguage` concurrentes podían dejar un cliente huérfano facturándose para siempre; un *mutex* por `(sala, idioma)` lo impide.
-- **Reconexión robusta a la IA.** *Watchdog* de silencio (10 s) + *backoff* exponencial reconectan automáticamente si el WebSocket de traducción se queda colgado.
-- **Perfiles de *playout*** (`balanced` / `low-latency` / `passthrough`) que ajustan el *jitter buffer* según el caso de uso (grabación vs. interpretación en vivo).
-- **Modelo de seguridad con jerarquía real** materializado en SQL: tabla de roles + RLS + RPC `SECURITY DEFINER` + trigger guardián de columnas.
-- **Dos motores de IA de distinto *sample rate* tras una sola interfaz** — Palabra (16 kHz) y OpenAI Realtime (24 kHz); el segundo exigió un *resampling* con filtro **FIR low-pass anti-aliasing** antes de la decimación 2:1, más conmutación de proveedor por evento sin reiniciar la sala.
-
----
-
-## Resultado e impacto
-
-- **En producción sirviendo eventos reales** de clientes a lo largo de 2025–2026 (congresos médicos nacionales de varias especialidades, y eventos corporativos).
-- **Métricas:** 20 tablas · 77 funciones/triggers PostgreSQL · 76 migraciones · jerarquía de permisos 3-tier · *embed widgets* integrables en webs externas · despliegue **Vercel** (web) + **Railway** (API single-replica) + **Supabase**.
-- **Decisión de escala honesta:** la API mantiene el estado de sesiones en memoria y corre como réplica única; escalar horizontalmente requeriría externalizar sesiones a Redis — documentado como fuera del alcance del beta.
+- **Distortion-free audio** under aggressive gain, with a soft-knee limiter that leaves nominal samples untouched and only compresses peaks.
+- **Anti-zombie translation sessions.** Two concurrent `addLanguage` calls could leave an orphaned client billing forever; a per-`(room, language)` mutex prevents it.
+- **Robust AI reconnection.** A 10 s silence watchdog + exponential backoff automatically reconnect if the translation WebSocket stalls.
+- **Playout profiles** (`balanced` / `low-latency` / `passthrough`) tuning the jitter buffer per use case (recording vs. live interpretation).
+- **A real role-hierarchy security model** materialized in SQL: roles table + RLS + `SECURITY DEFINER` RPC + column-guard trigger.
+- **Two AI engines with different sample rates behind one interface** — Palabra (16 kHz) and OpenAI Realtime (24 kHz); the latter required resampling with an **anti-aliasing FIR low-pass filter** before 2:1 decimation, plus per-event provider switching without restarting the room.
 
 ---
 
-## Competencias demostradas
+## Outcome & impact
 
-`LiveKit (WebRTC SFU)` · `procesamiento de audio (PCM, limiter, smoothing)` · `Palabra.ai` · `NestJS` · `Next.js` · `Supabase (RLS, RPC, triggers)` · `seguridad por roles` · `tiempo real` · `Vercel + Railway` · `monorepo Turborepo` · `chat en tiempo real` · `streaming de vídeo (Vimeo HLS proxy · Agora)` · `grabación de sesiones` · `arquitectura de proveedor desacoplada`
+- **In production serving real client events** across 2025–2026 (national medical congresses in several specialties, plus corporate events).
+- **Metrics:** 20 tables · 77 PostgreSQL functions/triggers · 76 migrations · 3-tier permission hierarchy · embeddable widgets for external sites · deployed on **Vercel** (web) + **Railway** (single-replica API) + **Supabase**.
+- **An honest scaling decision:** the API keeps session state in memory and runs as a single replica; horizontal scaling would require externalizing sessions to Redis — documented as out of scope for the beta.
+
+---
+
+## Skills demonstrated
+
+`LiveKit (WebRTC SFU)` · `audio processing (PCM, limiter, smoothing)` · `Palabra.ai` · `NestJS` · `Next.js` · `Supabase (RLS, RPCs, triggers)` · `role-based security` · `real-time` · `Vercel + Railway` · `Turborepo monorepo` · `real-time chat` · `video streaming (Vimeo HLS proxy · Agora)` · `session recording` · `decoupled provider architecture`

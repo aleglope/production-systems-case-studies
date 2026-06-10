@@ -1,10 +1,12 @@
+<p align="right"><a href="README.es.md">🇪🇸 Versión en español</a></p>
+
 <div align="center">
 
 # Congress Tech Systems
 
-### Ecosistema de software para la gestión integral de congresos médicos
+### A software ecosystem for end-to-end medical congress management
 
-**8 sistemas en producción, diseñados y construidos en solitario** a lo largo de varios meses de 2026, con un flujo de desarrollo *AI-augmented* (Claude Code + metodología de planificación por fases).
+**8 production systems, designed and built solo** across 2025–2026, with an AI-augmented development workflow (Claude Code + phase-based planning methodology).
 
 ![Next.js](https://img.shields.io/badge/Next.js-14_·_15_·_16-000000?logo=nextdotjs&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-10_·_11-ea2845?logo=nestjs&logoColor=white)
@@ -17,48 +19,48 @@
 
 ---
 
-## 📖 Qué es este repositorio
+## 📖 What this repository is
 
-Este repositorio **no contiene código fuente**. Es un **archivo de casos de estudio técnicos** del trabajo que realicé como **único desarrollador** del stack de software de una empresa española de organización de congresos médicos.
+This repository **contains no source code**. It is an **archive of technical case studies** covering the work I did as the **sole developer** of the software stack at a Spanish medical-congress management company.
 
-Los repositorios originales son **privados y propietarios**. Lo que encontrarás aquí es la **documentación de arquitectura, decisiones técnicas, retos resueltos y resultados** de cada sistema — el material que normalmente solo se ve en una entrevista técnica, recopilado de forma que un reclutador o un *lead developer* pueda evaluar el alcance real del trabajo.
+The original repositories are **private and proprietary**. What you will find here is the **architecture documentation, technical decisions, solved challenges and outcomes** of each system — the material that usually only surfaces in a technical interview, compiled so that a recruiter or lead developer can assess the real scope of the work.
 
-> **Por qué este formato.** En proyectos propietarios no se publica el código, pero sí se puede demostrar *cómo se piensa*: el diseño de sistemas, las decisiones justificadas, y el impacto en producción. Es la práctica estándar para mostrar trabajo que no se puede abrir.
+> **Why this format.** With proprietary projects you can't publish the code, but you *can* demonstrate how you think: system design, justified decisions, and production impact. This is the standard practice for showcasing work that can't be open-sourced.
 
 ---
 
-## 🗺️ El ecosistema de un vistazo
+## 🗺️ The ecosystem at a glance
 
-Todo el ecosistema giraba en torno a **FileMaker** como sistema operativo de verdad del negocio (lo que usaba el equipo interno), con sistemas web modernos construidos alrededor — unos lo **leen**, otros le **escriben de forma aditiva**, y otros operan sobre su propia base de datos sincronizada.
+The entire ecosystem revolved around **FileMaker** as the business's operational source of truth (what the internal team used daily), with modern web systems built around it — some **read** from it, some **write to it additively**, and others run on their own synchronized database.
 
 ```mermaid
 flowchart TB
-    subgraph CORE["🗄️ Núcleo operativo del negocio"]
-        FM[("FileMaker<br/>Data API<br/>verdad operativa interna")]
-        HEL[("Helice<br/>directorio de asistentes")]
+    subgraph CORE["🗄️ Business operational core"]
+        FM[("FileMaker<br/>Data API<br/>internal source of truth")]
+        HEL[("Helice<br/>attendee directory")]
     end
 
-    subgraph REG["💳 Inscripción y acreditación"]
-        IO["Inscripción Online v2<br/>registro + pagos Redsys"]
-        BF["BadgeFlow<br/>credenciales + kiosco 3D"]
-        PW["Programa-Web<br/>programa PDF / Gantt"]
+    subgraph REG["💳 Registration & accreditation"]
+        IO["Online Registration v2<br/>sign-up + Redsys payments"]
+        BF["BadgeFlow<br/>badges + 3D kiosk"]
+        PW["Programa-Web<br/>PDF program / Gantt"]
     end
 
-    subgraph LIVE["🎙️ Experiencia en directo"]
-        AN["AudioNow<br/>streaming audio multilingüe IA"]
-        CT["Congress Translation<br/>traducción simultánea PoC"]
-        BA["Beacon Attendance<br/>asistencia BLE + AWS IoT"]
+    subgraph LIVE["🎙️ Live experience"]
+        AN["AudioNow<br/>AI multilingual audio streaming"]
+        CT["Congress Translation<br/>simultaneous translation PoC"]
+        BA["Beacon Attendance<br/>BLE attendance + AWS IoT"]
     end
 
-    subgraph INTERNAL["🛠️ Herramientas y experiencias"]
-        SC["Sala de Cenas<br/>plano interactivo 2D/3D"]
-        LT["LogiTasks<br/>gestor de peticiones interno"]
+    subgraph INTERNAL["🛠️ Tools & experiences"]
+        SC["Dinner Room<br/>interactive 2D/3D floor plan"]
+        LT["LogiTasks<br/>internal request manager"]
     end
 
-    IO -- "cola aditiva fm_write_queue" --> FM
-    BF -- "lee inscripciones" --> FM
-    BF -- "lee directorio" --> HEL
-    PW -- "lee sesiones · solo lectura" --> FM
+    IO -- "additive queue fm_write_queue" --> FM
+    BF -- "reads registrations" --> FM
+    BF -- "reads directory" --> HEL
+    PW -- "reads sessions · read-only" --> FM
     SC -.-> SUPA[("Supabase<br/>PostgreSQL + Realtime")]
     AN -.-> SUPA
     LT -.-> SUPA
@@ -73,69 +75,69 @@ flowchart TB
 
 ---
 
-## 📂 Los 8 sistemas
+## 📂 The 8 systems
 
-| Sistema | Qué resuelve | Stack principal | Estado |
+| System | What it solves | Core stack | Status |
 |---|---|---|---|
-| **[Inscripción Online v2](projects/inscripcion-online.md)** | Inscripción y pago online multi-evento para congresos médicos | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Núcleo en producción |
-| **[BadgeFlow](projects/badgeflow.md)** | Generación e impresión de credenciales con kiosco 3D | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Producción (congreso real) |
-| **[AudioNow](projects/audionow.md)** | Streaming de audio multilingüe en tiempo real con IA | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Producción (eventos reales) |
-| **[Beacon Attendance](projects/beacon-attendance.md)** | Asistencia automática por *beacons* BLE | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 MVP funcional desplegado |
-| **[Congress Translation](projects/congress-translation.md)** | Traducción de voz simultánea para ponencias | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 entregado |
-| **[Programa-Web](projects/programa-web.md)** | Generador del programa del congreso (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Producción |
-| **[LogiTasks](projects/logitasks.md)** | Gestor interno de peticiones priorizadas por votación | Next.js 16 · Supabase Realtime · Resend | 🟢 Producción (interno) |
-| **[Sala de Cenas](projects/sala-cenas.md)** | Plano interactivo 2D/3D de reservas de mesa | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Mentoría a becario |
+| **[Online Registration v2](projects/inscripcion-online.md)** | Multi-event online registration and payments for medical congresses | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Core in production |
+| **[BadgeFlow](projects/badgeflow.md)** | Badge generation and printing with a 3D self-service kiosk | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Production (real congress) |
+| **[AudioNow](projects/audionow.md)** | Real-time multilingual audio streaming with AI translation | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Production (real events) |
+| **[Beacon Attendance](projects/beacon-attendance.md)** | Automatic attendance tracking via BLE beacons | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 Working MVP deployed |
+| **[Congress Translation](projects/congress-translation.md)** | Simultaneous voice translation for conference talks | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 delivered |
+| **[Programa-Web](projects/programa-web.md)** | Congress program generator (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Production |
+| **[LogiTasks](projects/logitasks.md)** | Internal request manager prioritized by team voting | Next.js 16 · Supabase Realtime · Resend | 🟢 Production (internal) |
+| **[Dinner Room](projects/sala-cenas.md)** | Interactive 2D/3D table-reservation floor plan | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Intern mentorship |
 
 ---
 
-## 🧩 Capacidades transversales demostradas
+## 🧩 Cross-cutting capabilities demonstrated
 
-Más allá de cada proyecto, el ecosistema completo demuestra dominio de:
+Beyond each individual project, the ecosystem as a whole demonstrates command of:
 
-- **Integración de sistemas legacy** — FileMaker como fuente de verdad operativa: lectura estricta (Programa-Web), sincronización **aditiva y nunca destructiva** mediante cola encolada (Inscripción Online), y conciliación multi-fuente Helice + FileMaker (BadgeFlow).
-- **Tiempo real** — WebRTC SFU con LiveKit (AudioNow, Congress Translation), Supabase Realtime (LogiTasks, Sala de Cenas), pipelines IoT sub-500 ms (Beacon Attendance).
-- **Integraciones de IA en producción** — traducción *speech-to-speech* con Palabra.ai, Azure Live Interpreter y OpenAI Realtime; importación de planos con visión (GPT-4.1 + OpenCV + OCR).
-- **Pagos** — TPV Redsys con firma HMAC-SHA256, webhooks server-to-server e idempotencia de intentos de pago.
-- **PWA y *offline-first*** — Service Workers con Serwist, cache de assets e IndexedDB para operar sin red en el propio congreso.
-- **3D en la web** — React Three Fiber + Rapier (física de *lanyard* en kiosco), Three.js + drei (editor de salas).
-- **Infraestructura** — Docker multi-stage, AWS CDK (IaC), despliegue en Vercel + Railway, *workers* externos.
-- **Seguridad** — RLS en PostgreSQL, RPC `SECURITY DEFINER`, jerarquías de roles, sesiones `iron-session`, rate limiting.
+- **Legacy system integration** — FileMaker as the operational source of truth: strict read-only access (Programa-Web), **additive, never-destructive** synchronization through a write queue (Online Registration), and multi-source reconciliation of Helice + FileMaker (BadgeFlow).
+- **Real-time** — WebRTC SFU with LiveKit (AudioNow, Congress Translation), Supabase Realtime (LogiTasks, Dinner Room), sub-500 ms IoT pipelines (Beacon Attendance).
+- **AI integrations in production** — speech-to-speech translation with Palabra.ai, Azure Live Interpreter and OpenAI Realtime; floor-plan import with vision (GPT-4.1 + OpenCV + OCR).
+- **Payments** — Redsys payment gateway with HMAC-SHA256 signing, server-to-server webhooks and payment-attempt idempotency.
+- **PWA & offline-first** — Service Workers with Serwist, asset caching and IndexedDB to keep operating with no network at the venue itself.
+- **3D on the web** — React Three Fiber + Rapier (badge-lanyard physics in the kiosk), Three.js + drei (room editor).
+- **Infrastructure** — multi-stage Docker, AWS CDK (IaC), Vercel + Railway deployments, external workers.
+- **Security** — PostgreSQL RLS, `SECURITY DEFINER` RPCs, role hierarchies, `iron-session` sessions, rate limiting.
 
-Ver el desglose completo en **[STACK.md](STACK.md)**.
-
----
-
-## 🤖 Metodología: desarrollo *AI-augmented* con disciplina de ingeniería
-
-Todo este ecosistema lo construyó **una sola persona** en cuestión de meses. Eso fue posible combinando herramientas de IA (Claude Code) con una **metodología de planificación por fases** que deja rastro verificable en cada repositorio:
-
-- **Planificación previa** — cada *milestone* se descompone en fases con documentos `PLAN`, `RESEARCH`, `CONTEXT` y `REQUIREMENTS` antes de escribir código.
-- **Verificación por fase** — cada fase cierra con un documento `VERIFICATION.md` que comprueba que el objetivo se cumplió (no solo que las tareas "se hicieron").
-- **Convenciones explícitas** — ficheros `CLAUDE.md` / `AGENTS.md` codifican las reglas del proyecto (p. ej. "esta versión de Next.js 16 tiene *breaking changes*: consulta los docs antes de tocar").
-- **Trazabilidad de decisiones** — IDs de decisión (`D-XX`), *pitfalls* numerados y referencias a planes embebidos en los comentarios del código.
-
-> El resultado no es *vibe coding*: es velocidad de una persona con el rigor de proceso de un equipo. La IA acelera la ejecución; la arquitectura, las decisiones y la verificación son responsabilidad del desarrollador.
-
-**En números (verificado en los repos):** 37 fases planificadas · 30 documentos de verificación · ~56 specs/planes de diseño · 2 agentes de IA reutilizables propios · **~314 archivos de test**.
-
-📄 Detalle completo en **[METHODOLOGY.md](METHODOLOGY.md)** (proceso *AI-augmented*) y **[TESTING.md](TESTING.md)** (batería de pruebas por proyecto).
+See the full breakdown in **[STACK.md](STACK.md)**.
 
 ---
 
-## 👤 Sobre el autor
+## 🤖 Methodology: AI-augmented development with engineering discipline
 
-**Alejandro González López** — Desarrollador full-stack.
+This entire ecosystem was built by **one person** in a matter of months. That was possible by combining AI tooling (Claude Code) with a **phase-based planning methodology** that leaves a verifiable trail in every repository:
 
-Único responsable del stack de software de la empresa: arquitectura, desarrollo, integraciones, despliegues y operación de los 8 sistemas de este repositorio. También responsable de mentorizar a un becario (ver [Sala de Cenas](projects/sala-cenas.md)).
+- **Plan before code** — every milestone is broken into phases with `PLAN`, `RESEARCH`, `CONTEXT` and `REQUIREMENTS` documents before writing code.
+- **Per-phase verification** — every phase closes with a `VERIFICATION.md` that checks the goal was achieved (not just that tasks "got done").
+- **Explicit conventions** — `CLAUDE.md` / `AGENTS.md` files codify each project's rules (e.g. "this Next.js 16 version has breaking changes: read the docs before touching anything").
+- **Decision traceability** — decision IDs (`D-XX`), numbered pitfalls and plan references embedded in code comments.
 
-- 🌐 Portfolio: *(pendiente de enlazar — `three-js-portfolio`)*
-- 💼 LinkedIn: *(añadir)*
+> The result is not vibe coding: it's one person's speed with a team's process rigor. AI accelerates execution; architecture, decisions and verification remain the developer's responsibility.
+
+**By the numbers (verified in the repos):** 37 planned phases · 30 verification documents · ~56 design specs/plans · 2 custom reusable AI agents · **~314 test files**.
+
+📄 Full detail in **[METHODOLOGY.md](METHODOLOGY.md)** (AI-augmented process) and **[TESTING.md](TESTING.md)** (per-project test suites).
+
+---
+
+## 👤 About the author
+
+**Alejandro González López** — Full-stack developer.
+
+Solely responsible for the company's software stack: architecture, development, integrations, deployments and operation of the 8 systems in this repository. Also responsible for mentoring an intern (see [Dinner Room](projects/sala-cenas.md)).
+
+- 🌐 Portfolio: *(link pending — `three-js-portfolio`)*
+- 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
 - 🐙 GitHub: [@aleglope](https://github.com/aleglope)
 
 ---
 
 <div align="center">
 
-*Los nombres de clientes y datos sensibles han sido anonimizados. Este repositorio documenta arquitectura y decisiones, no contiene código propietario.*
+*Client names and sensitive data have been anonymized. This repository documents architecture and decisions — it contains no proprietary code.*
 
 </div>

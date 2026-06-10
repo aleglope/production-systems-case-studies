@@ -1,38 +1,40 @@
-# Sala de Cenas
+<p align="right"><a href="sala-cenas.es.md">🇪🇸 Versión en español</a></p>
 
-> Plano interactivo **2D/3D** para la reserva de mesas en cenas de congreso: el asistente se identifica, ve la sala en tiempo real y elige su sitio. **Proyecto de mentoría** — desarrollado por un becario bajo mi dirección técnica.
+# Dinner Room
 
----
-
-## Contexto y problema
-
-Las cenas de gala de un congreso necesitan gestión de aforo y asignación de mesas. La idea: un plano **visual e interactivo** donde el asistente vea las mesas y sillas, su estado en tiempo real (libre / ocupada / seleccionada / asignada a él), y confirme su reserva — tanto desde su móvil como en un kiosco presencial con escáner QR.
-
-**Mi rol fue de mentor técnico, no de autor del código.** Tuve a mi cargo a un becario y este proyecto fue su vehículo de aprendizaje. Mi aportación consistió en:
-
-- Enseñarle a **trabajar con asistencia de IA** (Claude Code) de forma disciplinada.
-- Introducirle a las **librerías 3D/2D** del ecosistema (Three.js, React Three Fiber, drei, Konva) que yo ya usaba en BadgeFlow.
-- Definir la arquitectura de partida (Next.js + Supabase + Realtime) y revisar su evolución.
+> Interactive **2D/3D floor plan** for gala-dinner table reservations: attendees identify themselves, see the room in real time and pick their seat. **A mentorship project** — developed by an intern under my technical direction.
 
 ---
 
-## Solución y arquitectura
+## Context & problem
 
-El proyecto arrancó como un plano 2D con `react-konva` y Supabase Realtime, y **evolucionó muy por encima de su alcance inicial** bajo mentoría: editor de salas en 3D, importador de planos con visión por IA, y flujo presencial con QR.
+Congress gala dinners need capacity management and table assignment. The idea: a **visual, interactive floor plan** where attendees see tables and chairs, their real-time state (free / taken / selected / assigned to them), and confirm their reservation — from their phone or at an on-site kiosk with a QR scanner.
+
+**My role was technical mentor, not code author.** I was responsible for an intern, and this project was their learning vehicle. My contribution consisted of:
+
+- Teaching them to **work with AI assistance** (Claude Code) in a disciplined way.
+- Introducing them to the **3D/2D libraries** of the ecosystem (Three.js, React Three Fiber, drei, Konva) that I was already using in BadgeFlow.
+- Defining the starting architecture (Next.js + Supabase + Realtime) and reviewing its evolution.
+
+---
+
+## Solution & architecture
+
+The project started as a 2D floor plan with `react-konva` and Supabase Realtime, and **evolved far beyond its initial scope** under mentorship: a 3D room editor, an AI-vision floor-plan importer, and an on-site QR flow.
 
 ```mermaid
 flowchart TB
-    ID["Asistente se identifica<br/>código / QR"] --> ROOM["Carga la sala del evento"]
-    ROOM --> VIEW{"Vista"}
-    VIEW --> V2D["Plano 2D · Konva"]
-    VIEW --> V3D["Sala 3D · Three.js + R3F + drei"]
-    V2D --> SEAT["Selecciona silla → confirma reserva"]
+    ID["Attendee identifies<br/>code / QR"] --> ROOM["Loads the event room"]
+    ROOM --> VIEW{"View"}
+    VIEW --> V2D["2D plan · Konva"]
+    VIEW --> V3D["3D room · Three.js + R3F + drei"]
+    V2D --> SEAT["Picks a seat → confirms reservation"]
     V3D --> SEAT
-    SEAT --> SUPA[("Supabase · reservas")]
+    SEAT --> SUPA[("Supabase · reservations")]
     SUPA -- "Realtime" --> ROOM
 
-    subgraph IMPORT["Importador de planos · IA"]
-        IMG["Imagen / PDF del plano"] --> WORKER["Worker externo · Docker<br/>GPT-4.1 + OpenCV + Tesseract/PaddleOCR"]
+    subgraph IMPORT["Floor-plan importer · AI"]
+        IMG["Plan image / PDF"] --> WORKER["External worker · Docker<br/>GPT-4.1 + OpenCV + Tesseract/PaddleOCR"]
         WORKER --> JOB[("plan_import_jobs · Supabase")]
     end
     JOB -.-> ROOM
@@ -42,37 +44,37 @@ flowchart TB
 
 ---
 
-## Stack y decisiones técnicas
+## Stack & technical decisions
 
-| Tecnología | Decisión | Por qué |
+| Technology | Decision | Why |
 |---|---|---|
-| **Supabase Realtime** | Estado de las sillas sincronizado por WebSocket | Varias personas reservando a la vez ven los cambios al instante |
-| **Konva (2D) + Three.js/R3F (3D)** | Doble vista: plano 2D y sala 3D conmutables | Aprendizaje progresivo de 2D a 3D; mejor experiencia en kiosco presencial |
-| **Importador de planos con IA** | GPT-4.1 como capa principal de visión, con *fallback* determinista (OpenCV + Tesseract/PaddleOCR) | Convertir una imagen/PDF de plano en mesas y sillas estructuradas, con red de seguridad si la IA falla |
-| **Worker externo en Docker** | El OCR pesado y los procesos largos viven fuera de Vercel | Vercel no encaja con OCR pesado / Python / *filesystem* temporal; el worker consume una cola en Supabase |
-| **Flujo presencial con QR** | Escáner QR dedicado + controles táctiles/joystick para kiosco | Reserva en el propio evento, no solo desde el móvil del asistente |
+| **Supabase Realtime** | Seat state synchronized over WebSocket | Several people reserving at once see changes instantly |
+| **Konva (2D) + Three.js/R3F (3D)** | Dual switchable views: 2D plan and 3D room | Progressive 2D-to-3D learning curve; better experience at the on-site kiosk |
+| **AI floor-plan importer** | GPT-4.1 as the primary vision layer, with a deterministic fallback (OpenCV + Tesseract/PaddleOCR) | Turns a plan image/PDF into structured tables and chairs, with a safety net if the AI fails |
+| **External Docker worker** | Heavy OCR and long-running jobs live outside Vercel | Vercel doesn't fit heavy OCR / Python / temp filesystems; the worker consumes a Supabase job queue |
+| **On-site QR flow** | Dedicated QR scanner + touch/joystick kiosk controls | Reservation at the event itself, not only from the attendee's phone |
 
 ---
 
-## Retos técnicos resueltos (por el becario, con mentoría)
+## Solved technical challenges (by the intern, under mentorship)
 
-- **De 2D a 3D**: pasar de un plano `react-konva` a un editor de salas en 3D con Three.js, picking preciso de sillas y controles táctiles para móvil.
-- **Importación de planos con visión por IA** con arquitectura de *fallback*: si `OPENAI_API_KEY` está presente, GPT-4.1 interpreta el plano; si no o si falla, cae a un importador determinista con OpenCV/OCR.
-- **Separación frontend (Vercel) / worker (Docker)** para procesos largos, comunicados por una tabla de *jobs* en Supabase.
-- **Flujo presencial vs. móvil** diferenciados, con *fullscreen*, orientación y *overlays* guiados.
-
----
-
-## Resultado e impacto
-
-- **Valor para mí como mentor:** demuestra capacidad de **liderazgo técnico** — definir una arquitectura, transferir conocimiento (IA + 3D) a alguien junior, y acompañar un proyecto que superó con creces su alcance inicial.
-- **Resultado del becario:** un sistema que evolucionó de un plano 2D básico a una plataforma con editor 3D, importación de planos por IA y flujo presencial con QR.
-- **Métricas:** Next.js 14 · 9 migraciones Supabase · RLS · pipeline de importación con IA + worker en Docker · desplegable en Vercel + worker en Render/Railway/Fly.
-
-> Incluyo este proyecto no como código propio, sino como evidencia de **mentoría y dirección técnica** — una faceta tan relevante como la construcción individual en el resto del ecosistema.
+- **From 2D to 3D**: going from a `react-konva` plan to a 3D room editor with Three.js, precise chair picking and mobile touch controls.
+- **AI-vision floor-plan import** with a fallback architecture: with `OPENAI_API_KEY` present, GPT-4.1 interprets the plan; without it, or on failure, it falls back to a deterministic OpenCV/OCR importer.
+- **Frontend (Vercel) / worker (Docker) split** for long-running jobs, communicating through a Supabase jobs table.
+- **On-site vs. mobile flows** differentiated, with fullscreen, orientation handling and guided overlays.
 
 ---
 
-## Competencias demostradas
+## Outcome & impact
 
-`Mentoría / liderazgo técnico` · `Three.js + R3F + drei` · `Konva` · `Supabase Realtime` · `integración de IA (GPT-4.1 visión)` · `OpenCV / Tesseract / PaddleOCR` · `workers en Docker` · `arquitectura con fallback` · `transferencia de conocimiento`
+- **Value for me as a mentor:** it demonstrates **technical leadership** — defining an architecture, transferring knowledge (AI + 3D) to a junior, and guiding a project that far exceeded its initial scope.
+- **The intern's outcome:** a system that evolved from a basic 2D plan into a platform with a 3D editor, AI floor-plan import and an on-site QR flow.
+- **Metrics:** Next.js 14 · 9 Supabase migrations · RLS · AI import pipeline + Docker worker · deployable on Vercel + worker on Render/Railway/Fly.
+
+> I include this project not as my own code, but as evidence of **mentorship and technical direction** — a facet as relevant as solo building across the rest of the ecosystem.
+
+---
+
+## Skills demonstrated
+
+`Mentorship / technical leadership` · `Three.js + R3F + drei` · `Konva` · `Supabase Realtime` · `AI integration (GPT-4.1 vision)` · `OpenCV / Tesseract / PaddleOCR` · `Docker workers` · `fallback architecture` · `knowledge transfer`

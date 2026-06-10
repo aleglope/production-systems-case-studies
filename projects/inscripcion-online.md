@@ -1,105 +1,107 @@
-# Inscripción Online v2
+<p align="right"><a href="inscripcion-online.es.md">🇪🇸 Versión en español</a></p>
 
-> Plataforma multi-evento de inscripción y pago online para congresos médicos, con dos flujos de inscripción distintos y sincronización **aditiva y no destructiva** hacia un FileMaker compartido.
+# Online Registration v2
 
----
-
-## Contexto y problema
-
-La empresa organiza congresos para múltiples asociaciones médicas (cardiología, dermatología, etc.). La plataforma de inscripción **v1** era un sistema PHP heredado: un formulario único, acoplado a FileMaker, difícil de evolucionar y sin separación entre tipos de comprador.
-
-El **v2** nace para resolver tres problemas reales:
-
-1. **Dos públicos muy distintos** comparten el mismo evento: el **profesional sanitario (HCP)** que se autoinscribe, y el **comprador grupal** (una clínica, agencia o laboratorio) que inscribe a varios HCP y necesita una única factura.
-2. **FileMaker no se puede tocar a la ligera.** Es la verdad operativa del equipo interno y la base es compartida entre desarrollo y producción. Cualquier escritura tenía que ser **aditiva y reversible**, nunca destructiva.
-3. **Migración sin big-bang.** El v1 PHP debía seguir vivo para eventos en curso mientras el v2 se desplegaba evento a evento.
+> Multi-event online registration and payment platform for medical congresses, with two distinct registration flows and **additive, non-destructive** synchronization to a shared FileMaker database.
 
 ---
 
-## Discovery: entender FileMaker antes de reemplazarlo
+## Context & problem
 
-El v2 no empezó por el código, sino por **entender cómo trabaja realmente el equipo**. El v1 PHP operaba alrededor de FileMaker con flujos y reglas tácitas que solo existían en la cabeza de quienes lo usaban a diario. Reemplazarlo a ciegas habría roto la operación del negocio.
+The company runs congresses for multiple medical associations (cardiology, dermatology, etc.). The **v1** registration platform was a legacy PHP system: a single form, tightly coupled to FileMaker, hard to evolve and with no separation between buyer types.
 
-El proceso de descubrimiento incluyó:
+**v2** was born to solve three real problems:
 
-- **Sesiones de trabajo grabadas con el equipo interno** (abril 2026) para observar, paso a paso, cómo inscriben, facturan y gestionan asistentes en FileMaker — capturando los **casos límite y las reglas tácitas** que ningún documento recogía. Las grabaciones se transcribieron y se convirtieron en requisitos.
-- **Ingeniería inversa del FileMaker existente** — análisis del esquema real y de los *scripts* de negocio (`*_FindOrCreate.xml`) para replicar su lógica sin romper la base compartida dev+prod.
-- **Recogida de requisitos de dirección** — qué quería la empresa de la nueva web: facturación única patrocinada por laboratorios, *data sharing* controlado con *sponsors* (GDPR Art. 14), reasignación de plazas y un plazo de salida a producción de **~mes y medio**.
-- **Investigación de arquitectura previa al código** — notas de análisis (`auth-tracking-architecture-analysis`, `event-user-architecture-research`) y un **PRD v2.1** formal antes de escribir una línea, para converger en un sistema **fuerte y rápido de llevar a producción**.
-- **Cumplimiento normativo como requisito de primera clase** — alta de *Sender ID* de SMS ante la **CNMC**, factura rectificativa **AEAT** y GDPR.
-
-> Observar, transcribir, modelar y acordar con dirección **antes** de construir es lo que permitió que el rediseño avanzara rápido sin tumbar la operación del negocio. Es trabajo de producto, no solo de programación.
+1. **Two very different audiences** share the same event: the **healthcare professional (HCP)** who self-registers, and the **group buyer** (a clinic, agency or pharma lab) who registers several HCPs and needs a single invoice.
+2. **FileMaker can't be touched lightly.** It is the internal team's operational source of truth and the database is shared between development and production. Any write had to be **additive and reversible**, never destructive.
+3. **No big-bang migration.** The PHP v1 had to stay alive for in-flight events while v2 rolled out event by event.
 
 ---
 
-## Solución y arquitectura
+## Discovery: understanding FileMaker before replacing it
 
-El rediseño invierte la fuente de verdad: **Supabase (PostgreSQL) pasa a ser la verdad de los datos web nuevos**, y FileMaker se sincroniza de forma **aditiva y diferida** mediante una cola encolada. Nada se borra ni se *mergea* automáticamente en FileMaker.
+v2 didn't start with code — it started by **understanding how the team actually works**. The PHP v1 operated around FileMaker with tacit flows and rules that existed only in the heads of its daily users. Replacing it blindly would have broken business operations.
+
+The discovery process included:
+
+- **Recorded working sessions with the internal team** (April 2026) to observe, step by step, how they register, invoice and manage attendees in FileMaker — capturing the **edge cases and tacit rules** no document recorded. The recordings were transcribed and turned into requirements.
+- **Reverse engineering the existing FileMaker** — analysis of the real schema and the business scripts (`*_FindOrCreate.xml`) to replicate their logic without breaking the shared dev+prod database.
+- **Requirements gathering from management** — what the company wanted from the new registration site: sponsored single invoicing for pharma labs, controlled data sharing with sponsors (GDPR Art. 14), seat reassignment, and a **~six-week** path to production.
+- **Architecture research before code** — analysis notes (`auth-tracking-architecture-analysis`, `event-user-architecture-research`) and a formal **PRD v2.1** before writing a single line, to converge on a system that was **robust and fast to take to production**.
+- **Regulatory compliance as a first-class requirement** — SMS Sender ID registration with the **CNMC** (Spanish telecom regulator), **AEAT**-compliant corrective invoicing, and GDPR.
+
+> Observing, transcribing, modeling and agreeing with management **before** building is what allowed the redesign to move fast without taking down business operations. That's product work, not just programming.
+
+---
+
+## Solution & architecture
+
+The redesign flips the source of truth: **Supabase (PostgreSQL) becomes the truth for all new web data**, and FileMaker is synchronized **additively and deferred** through a write queue. Nothing is ever deleted or auto-merged in FileMaker.
 
 ```mermaid
 flowchart TB
-    NAV(["Navegador · React 19"]) --> PROXY["proxy.ts · gate Next.js 16<br/>rate limit · tracking · PHP failover"]
-    PROXY --> IND["Flujo INDIVIDUAL<br/>passwordless · cookie io_otp"]
-    PROXY --> GRP["Flujo GRUPAL<br/>comprador · cookie io_session"]
+    NAV(["Browser · React 19"]) --> PROXY["proxy.ts · Next.js 16 gate<br/>rate limit · tracking · PHP failover"]
+    PROXY --> IND["INDIVIDUAL flow<br/>passwordless · io_otp cookie"]
+    PROXY --> GRP["GROUP flow<br/>buyer · io_session cookie"]
 
     IND --> SA["Server Actions"]
     GRP --> SA
-    SA --> DB[("Supabase / Drizzle<br/>fuente de verdad · 31 tablas")]
-    SA --> REDSYS["Redsys TPV<br/>HMAC-SHA256 · webhook"]
+    SA --> DB[("Supabase / Drizzle<br/>source of truth · 31 tables")]
+    SA --> REDSYS["Redsys gateway<br/>HMAC-SHA256 · webhook"]
     SA --> OTP["OTP<br/>Resend email · Twilio SMS"]
-    SA --> I18N["next-intl · 6 locales<br/>traducción LLM multi-proveedor"]
+    SA --> I18N["next-intl · 6 locales<br/>LLM multi-provider translation"]
 
-    SA --> Q["cola fm_write_queue"]
-    Q -. "aditivo · diferido · find-or-create" .-> FM[("FileMaker<br/>verdad operativa interna")]
+    SA --> Q["fm_write_queue"]
+    Q -. "additive · deferred · find-or-create" .-> FM[("FileMaker<br/>internal source of truth")]
 
     style DB fill:#065f46,color:#fff
     style FM fill:#1f2937,color:#fff
     style REDSYS fill:#7c2d12,color:#fff
 ```
 
-### Los dos flujos (el núcleo del v2)
+### The two flows (the core of v2)
 
-**1. Individual — passwordless.** El HCP se identifica por **DNI** y verifica con **OTP** (email vía Resend por defecto; SMS vía Twilio Verify como *fallback*). Tras verificar, una cookie `io_otp` (`iron-session`, 1 h *sliding* + tope absoluto de 24 h, *scoped* a `id_persona/id_evento/id_asociacion`) habilita un wizard de 4 pasos (datos → tarifas filtradas por perfil → facturación → pago Redsys) y la inscripción **multi-paciente** sin repetir OTP.
+**1. Individual — passwordless.** The HCP identifies with their **national ID** and verifies via **OTP** (email through Resend by default; SMS through Twilio Verify as fallback). After verification, an `io_otp` cookie (`iron-session`, 1 h sliding + 24 h absolute cap, scoped to `id_persona/id_evento/id_asociacion`) unlocks a 4-step wizard (details → profile-filtered fees → billing → Redsys payment) and **multi-patient** registration without repeating the OTP.
 
-**2. Grupal — comprador.** Quien inscribe a varios HCP crea una cuenta (usuario + contraseña, o acceso alternativo por OTP-email), y desde un *dashboard* "Mis Inscripciones" añade N asistentes por DNI o nombre. **"Pagar todo"** emite **1 factura con N líneas**, donde cada `LineaFactura.id_persona` es el HCP correspondiente. Incluye **reasignación de plaza** dentro de un plazo configurable (cambia el HCP, registra `audit_log`, regenera el justificante y notifica a saliente y entrante) sin factura rectificativa.
+**2. Group — buyer.** Whoever registers several HCPs creates an account (username + password, or an alternative email-OTP login) and, from a "My Registrations" dashboard, adds N attendees by ID or name. **"Pay everything"** issues **1 invoice with N line items**, each `LineaFactura.id_persona` pointing to the corresponding HCP. It includes **seat reassignment** within a configurable window (swaps the HCP, records to `audit_log`, regenerates the receipt and notifies both parties) without a corrective invoice.
 
-Los dos flujos usan **contratos de privacidad opuestos a propósito**: el individual oculta los datos hasta un OTP correcto (anti-suplantación); el grupal muestra solo nombre/apellidos/DNI en la búsqueda — **nunca empresa ni NIF** — porque el comprador ya está autenticado.
+The two flows use **deliberately opposite privacy contracts**: the individual flow hides all data until a successful OTP (anti-impersonation); the group flow shows only name/surname/ID in search — **never company or tax ID** — because the buyer is already authenticated.
 
 ---
 
-## Stack y decisiones técnicas
+## Stack & technical decisions
 
-| Tecnología | Decisión | Por qué |
+| Technology | Decision | Why |
 |---|---|---|
-| **Next.js 16 + `proxy.ts`** | Usar el nuevo `proxy.ts` (no `middleware.ts`) como gate | Next 16 introdujo *breaking changes*; el gate aplica rate limit, *failover* a PHP legacy y *tracking* de funnel, dejando la auth a nivel de página |
-| **Supabase + Drizzle ORM** | Supabase como fuente de verdad; FileMaker aditivo | Permite evolucionar el modelo web sin bloquear al equipo interno que sigue en FileMaker |
-| **Cola `fm_write_queue`** | *Handlers* solo `create`/`update`, **cero `delete`**, *find-or-create* idempotente | Imposibilita por construcción que la web corrompa la base compartida dev+prod |
-| **`iron-session` dual** | Dos cookies ortogonales: `io_otp` (individual) e `io_session` (grupal/v1) | Cada flujo tiene su identidad y ciclo de vida; mismo secreto, distinto `cookieName` |
-| **Redsys + `id_intento`** | Idempotencia: un reintento reusa el mismo intento, regenera el `tpv_order_id` | Evita filas de pago duplicadas tras un fallo de TPV; cadena de propiedad anti-ataque cross-tenant |
-| **next-intl + LLM** | 6 locales con traducción automática multi-proveedor y cache auto-sanable | Paridad de 614 claves en es/en/fr/de/it/pt sin traducción manual |
-| **Bcrypt + pepper** | Solo para `auth_accounts` (grupal), no para el individual | El flujo individual es passwordless; el pepper separado no rompe el *dual-write* con PHP |
+| **Next.js 16 + `proxy.ts`** | Use the new `proxy.ts` (not `middleware.ts`) as the gate | Next 16 introduced breaking changes; the gate applies rate limiting, legacy-PHP failover and funnel tracking, leaving auth at page level |
+| **Supabase + Drizzle ORM** | Supabase as source of truth; FileMaker additive | Lets the web data model evolve without blocking the internal team still on FileMaker |
+| **`fm_write_queue`** | Handlers only `create`/`update`, **zero `delete`**, idempotent find-or-create | Makes it impossible by construction for the web app to corrupt the shared dev+prod database |
+| **Dual `iron-session`** | Two orthogonal cookies: `io_otp` (individual) and `io_session` (group/v1) | Each flow has its own identity and lifecycle; same secret, different `cookieName` |
+| **Redsys + `id_intento`** | Idempotency: a retry reuses the same attempt and regenerates the `tpv_order_id` | Prevents duplicate payment rows after a gateway failure; ownership chain blocks cross-tenant tampering |
+| **next-intl + LLM** | 6 locales with automated multi-provider translation and self-healing cache | 614-key parity across es/en/fr/de/it/pt with no manual translation |
+| **Bcrypt + pepper** | Only for `auth_accounts` (group flow), not the individual one | The individual flow is passwordless; the separate pepper keeps the PHP dual-write intact |
 
 ---
 
-## Retos técnicos resueltos
+## Solved technical challenges
 
-- **Idempotencia de pago de libro.** El reintento reusa `id_intento` e incrementa el contador **solo si** el *hand-off* al gateway tuvo éxito (fix que evita el bloqueo prematuro del usuario). La cadena `Pago → Factura → Orden` se valida con *inner joins* para impedir manipulación entre *tenants*.
-- **Cola FileMaker aditiva por construcción.** Cada *handler* es *find-or-create* y aplica un *boundary filter*: solo los campos que el *script* de FileMaker lee viajan en el parámetro. Un *kill switch* (`FM_QUEUE_STUB`) centraliza el modo *stub* vs. real.
-- **Reasignación con *fail-open*.** El cálculo del plazo parsea fechas de FileMaker en JS (nunca un `MIN` SQL sobre `MM/DD/YYYY`), con *guard* cross-account, `audit_log` con `await` crítico y emails aislados que nunca tumban la transacción.
-- **Multi-tenancy real** por rutas `/<eventId>/<assocId>/` con tema visual por evento, serie de factura por asociación y `Persona` única por `(documento, id_asociacion)`.
-
----
-
-## Resultado e impacto
-
-- **Los flujos críticos están terminados y funcionan de extremo a extremo.** Lo difícil del producto — autenticación dual, pagos idempotentes, sincronización segura a FileMaker, multi-evento, i18n — está cerrado y verificado.
-- **Estado honesto del *roadmap*:** de los 7 *milestones* del v2, los **3 primeros (M1–M3) están cerrados** con su `VERIFICATION.md`; los restantes (facturación a empresa con patrocinador, *outbox* cross-DB, compliance/reportes, *polish* de UX) están **planificados pero pendientes**. El proyecto está sobre el ~56 % del *roadmap* total, con el *core* operativo.
-- **Métricas del código:** 31 tablas Drizzle · 31 migraciones SQL · 56 *Server Actions* · 125 archivos de test (881 tests) · 6 locales · 709 commits.
-
-> **Nota de transparencia técnica:** quedan focos de deuda conscientes (errores de `typecheck` pendientes de resolver, una suite de test heredada que no compila, y la numeración de factura mitigada con índice parcial a la espera de una secuencia por asociación). Están documentados en los `VERIFICATION.md` y el `STATE.md` del proyecto, no escondidos — parte de la disciplina de la metodología.
+- **Textbook payment idempotency.** A retry reuses `id_intento` and increments the counter **only if** the gateway hand-off succeeded (a fix that prevents prematurely locking the user out). The `Payment → Invoice → Order` chain is validated with inner joins to block cross-tenant manipulation.
+- **A FileMaker queue that is additive by construction.** Every handler is find-or-create and applies a boundary filter: only the fields the FileMaker script reads travel in the parameter. A kill switch (`FM_QUEUE_STUB`) centralizes stub vs. real mode.
+- **Fail-open reassignment.** The deadline computation parses FileMaker dates in JS (never a SQL `MIN` over `MM/DD/YYYY`), with a cross-account guard, a critically-awaited `audit_log`, and isolated emails that can never take down the transaction.
+- **Real multi-tenancy** via `/<eventId>/<assocId>/` routes with per-event theming, per-association invoice series, and `Persona` uniqueness per `(document, association)`.
 
 ---
 
-## Competencias demostradas
+## Outcome & impact
 
-`Next.js 16` · `React 19 Server Actions` · `Drizzle ORM` · `PostgreSQL` · `Supabase` · `Redsys (TPV)` · `iron-session` · `OTP (Twilio/Resend)` · `FileMaker Data API` · `colas idempotentes` · `i18n LLM` · `rate limiting (Upstash)` · `multi-tenant` · `auditoría/compliance` · `Vitest` · `product discovery` · `requirements engineering` · `ingeniería inversa de legacy` · `gestión de stakeholders` · `compliance (GDPR/CNMC/AEAT)`
+- **The critical flows are finished and work end-to-end.** The hard parts of the product — dual auth, idempotent payments, safe FileMaker sync, multi-event, i18n — are closed and verified.
+- **Honest roadmap status:** of v2's 7 milestones, the **first 3 (M1–M3) are closed** with their `VERIFICATION.md`; the rest (sponsored company invoicing, cross-DB outbox, compliance/reporting, UX polish) are **planned but pending**. The project sits at ~56% of the total roadmap, with the core operational.
+- **Code metrics:** 31 Drizzle tables · 31 SQL migrations · 56 Server Actions · 125 test files (881 tests) · 6 locales · 709 commits.
+
+> **Technical transparency note:** conscious debt remains (unresolved `typecheck` errors, one legacy test suite that doesn't compile, and invoice numbering mitigated with a partial index while waiting for a per-association sequence). It is documented in the project's `VERIFICATION.md` and `STATE.md` files, not hidden — that's part of the methodology's discipline.
+
+---
+
+## Skills demonstrated
+
+`Next.js 16` · `React 19 Server Actions` · `Drizzle ORM` · `PostgreSQL` · `Supabase` · `Redsys (payment gateway)` · `iron-session` · `OTP (Twilio/Resend)` · `FileMaker Data API` · `idempotent queues` · `LLM i18n` · `rate limiting (Upstash)` · `multi-tenant` · `audit/compliance` · `Vitest` · `product discovery` · `requirements engineering` · `legacy reverse engineering` · `stakeholder management` · `compliance (GDPR/CNMC/AEAT)`

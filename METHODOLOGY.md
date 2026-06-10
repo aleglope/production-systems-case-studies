@@ -1,71 +1,73 @@
-# Metodología: desarrollo *AI-augmented* con disciplina de ingeniería
+<p align="right"><a href="METHODOLOGY.es.md">🇪🇸 Versión en español</a></p>
 
-Construir **8 sistemas en producción en cuestión de meses, en solitario**, no fue *vibe coding*. Fue una metodología deliberada que combina herramientas de IA (Claude Code) con un proceso de planificación y verificación por fases que deja **rastro auditable en cada repositorio**.
+# Methodology: AI-augmented development with engineering discipline
 
-Este documento recoge la **evidencia real** de ese proceso — lo que un reclutador o *lead* puede comprobar.
+Building **8 production systems in a matter of months, solo**, was not vibe coding. It was a deliberate methodology combining AI tooling (Claude Code) with a phase-based planning and verification process that leaves an **auditable trail in every repository**.
 
----
-
-## 1. Planificación por fases antes del código (GSD)
-
-Cada *milestone* se descompone en fases, y cada fase produce documentos `PLAN`, `RESEARCH`, `CONTEXT` y `REQUIREMENTS` **antes** de escribir código. Cada fase cierra con un `VERIFICATION.md` que comprueba —*goal-backward*— que el objetivo se cumplió, no solo que las tareas "se hicieron".
-
-**Evidencia agregada:** **37 fases** planificadas y **30 documentos de verificación** a lo largo del ecosistema.
+This document collects the **real evidence** of that process — what a recruiter or lead can actually verify.
 
 ---
 
-## 2. Agentes reutilizables propios
+## 1. Phase-based planning before code (GSD)
 
-Más allá de *usar* IA, construí **agentes especializados para mi dominio**, versionados en el repo (`.claude/agents/`):
+Every milestone is broken down into phases, and every phase produces `PLAN`, `RESEARCH`, `CONTEXT` and `REQUIREMENTS` documents **before** any code is written. Every phase closes with a `VERIFICATION.md` that checks — goal-backward — that the objective was achieved, not just that tasks "got done".
 
-| Agente | Proyecto | Qué automatiza |
+**Aggregate evidence:** **37 phases** planned and **30 verification documents** across the ecosystem.
+
+---
+
+## 2. Custom reusable agents
+
+Beyond *using* AI, I built **specialized agents for my domain**, versioned in the repo (`.claude/agents/`):
+
+| Agent | Project | What it automates |
 |---|---|---|
-| **`livekit-translation-reviewer`** | AudioNow | Audita el *bridge* LiveKit ↔ Palabra/OpenAI buscando fugas de sesión, *race conditions* y regresiones de audio |
-| **`prisma-supabase-migration-checker`** | AudioNow | Revisa migraciones Prisma/Supabase contra el esquema y las políticas RLS antes de aplicarlas |
+| **`livekit-translation-reviewer`** | AudioNow | Audits the LiveKit ↔ Palabra/OpenAI bridge for session leaks, race conditions and audio regressions |
+| **`prisma-supabase-migration-checker`** | AudioNow | Reviews Prisma/Supabase migrations against the schema and RLS policies before they are applied |
 
-Es la diferencia entre *consumir* una herramienta y *construir* tu propio tooling sobre ella.
-
----
-
-## 3. Desarrollo dirigido por subagentes y *skills*
-
-El trabajo se apoyó en **subagentes** (descomposición de tareas en paralelo) y en *skills* reutilizables. Varias specs lo declaran explícitamente (p. ej. *"brainstormed with Claude"*, *"REQUIRED SUB-SKILL: subagent-driven-development"*).
-
-**Evidencia:** **~56 documentos** de specs y planes de diseño (AudioNow concentra ~49), cada uno con su *decision log* y *checklists* de ejecución.
+That's the difference between *consuming* a tool and *building your own tooling* on top of it.
 
 ---
 
-## 4. Convenciones codificadas para la IA
+## 3. Subagent-driven development and skills
 
-Ficheros `CLAUDE.md` / `AGENTS.md` codifican las reglas del proyecto para que cualquier sesión de IA las respete — por ejemplo, *"esta versión de Next.js 16 tiene breaking changes: consulta los docs antes de tocar código"*, o la política de **FileMaker de solo lectura**.
+The work leaned on **subagents** (parallel task decomposition) and reusable skills. Several specs declare it explicitly (e.g. *"brainstormed with Claude"*, *"REQUIRED SUB-SKILL: subagent-driven-development"*).
 
-**Evidencia:** `CLAUDE.md` en **6 de 8** proyectos · `AGENTS.md` en **3 de 8**.
-
----
-
-## 5. Trazabilidad de decisiones
-
-Las decisiones quedan referenciadas en el propio código: IDs de decisión (`D-XX`), *pitfalls* numerados y referencias a planes (`Phase 33 Plan 33-08`) embebidos en comentarios. Cualquiera puede reconstruir *por qué* algo se hizo de una forma.
+**Evidence:** **~56 documents** of design specs and plans (AudioNow concentrates ~49), each with its decision log and execution checklists.
 
 ---
 
-## Evidencia por proyecto
+## 4. Conventions codified for the AI
 
-| Proyecto | Fases GSD | Verif. docs | Specs+Plans | Agentes propios | `CLAUDE`/`AGENTS` |
+`CLAUDE.md` / `AGENTS.md` files codify each project's rules so that any AI session respects them — for example, *"this Next.js 16 version has breaking changes: read the docs before touching code"*, or the **read-only FileMaker** policy.
+
+**Evidence:** `CLAUDE.md` in **6 of 8** projects · `AGENTS.md` in **3 of 8**.
+
+---
+
+## 5. Decision traceability
+
+Decisions are referenced in the code itself: decision IDs (`D-XX`), numbered pitfalls and plan references (`Phase 33 Plan 33-08`) embedded in comments. Anyone can reconstruct *why* something was done a certain way.
+
+---
+
+## Evidence per project
+
+| Project | GSD phases | Verif. docs | Specs+Plans | Custom agents | `CLAUDE`/`AGENTS` |
 |---|---:|---:|---:|---:|:--|
-| Inscripción Online | 16 | 11 | 1 | — | ✓ / ✓ |
+| Online Registration | 16 | 11 | 1 | — | ✓ / ✓ |
 | Congress Translation | 10 | 10 | — | — | ✓ / — |
 | BadgeFlow | 5 | 5 | 2 | — | ✓ / — |
 | Programa-Web | 4 | 4 | 2 | — | ✓ / — |
 | AudioNow | — | — | **49** | **2** | — / — |
 | Beacon Attendance | 1 | — | — | — | ✓ / — |
 | LogiTasks | 1 | — | 2 | — | ✓ / ✓ |
-| Sala de Cenas | — | — | — | — | ✓ / ✓ |
+| Dinner Room | — | — | — | — | ✓ / ✓ |
 
 ---
 
-## El resultado
+## The result
 
-**Velocidad de una persona, rigor de proceso de un equipo.** La IA acelera la ejecución; la arquitectura, las decisiones y la verificación siguen siendo responsabilidad del desarrollador. Esa misma disciplina se transfirió a un **becario** al que formé en el uso de IA y librerías 3D (ver [Sala de Cenas](projects/sala-cenas.md)).
+**One person's speed, a team's process rigor.** AI accelerates execution; architecture, decisions and verification remain the developer's responsibility. That same discipline was transferred to an **intern** I trained in AI tooling and 3D libraries (see [Dinner Room](projects/sala-cenas.md)).
 
-> Para la batería de pruebas de cada sistema, ver **[TESTING.md](TESTING.md)**.
+> For each system's test suite, see **[TESTING.md](TESTING.md)**.
