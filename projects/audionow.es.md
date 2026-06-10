@@ -89,7 +89,7 @@ flowchart TB
 
 ## Resultado e impacto
 
-- **En producción sirviendo eventos reales** de clientes a lo largo de 2025–2026 (congresos médicos nacionales de varias especialidades, y eventos corporativos).
+- **En producción sirviendo eventos reales** de clientes (congresos médicos nacionales de varias especialidades, y eventos corporativos).
 - **Métricas:** 20 tablas · 77 funciones/triggers PostgreSQL · 76 migraciones · jerarquía de permisos 3-tier · *embed widgets* integrables en webs externas · despliegue **Vercel** (web) + **Railway** (API single-replica) + **Supabase**.
 - **Decisión de escala honesta:** la API mantiene el estado de sesiones en memoria y corre como réplica única; escalar horizontalmente requeriría externalizar sesiones a Redis — documentado como fuera del alcance del beta.
 

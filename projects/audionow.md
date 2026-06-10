@@ -89,7 +89,7 @@ flowchart TB
 
 ## Outcome & impact
 
-- **In production serving real client events** across 2025–2026 (national medical congresses in several specialties, plus corporate events).
+- **In production serving real client events** (national medical congresses in several specialties, plus corporate events).
 - **Metrics:** 20 tables · 77 PostgreSQL functions/triggers · 76 migrations · 3-tier permission hierarchy · embeddable widgets for external sites · deployed on **Vercel** (web) + **Railway** (single-replica API) + **Supabase**.
 - **An honest scaling decision:** the API keeps session state in memory and runs as a single replica; horizontal scaling would require externalizing sessions to Redis — documented as out of scope for the beta.
 

@@ -6,7 +6,7 @@
 
 ### Ecosistema de software para la gestión integral de congresos médicos
 
-**8 sistemas en producción, diseñados y construidos en solitario** a lo largo de 2025–2026, con un flujo de desarrollo *AI-augmented* (Claude Code + metodología de planificación por fases).
+**8 sistemas en producción, diseñados y construidos en solitario en cinco meses** (enero–mayo 2026), con un flujo de desarrollo *AI-augmented* (Claude Code + metodología de planificación por fases).
 
 ![Next.js](https://img.shields.io/badge/Next.js-14_·_15_·_16-000000?logo=nextdotjs&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-10_·_11-ea2845?logo=nestjs&logoColor=white)

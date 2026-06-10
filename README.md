@@ -6,7 +6,7 @@
 
 ### A software ecosystem for end-to-end medical congress management
 
-**8 production systems, designed and built solo** across 2025–2026, with an AI-augmented development workflow (Claude Code + phase-based planning methodology).
+**8 production systems, designed and built solo in five months** (January–May 2026), with an AI-augmented development workflow (Claude Code + phase-based planning methodology).
 
 ![Next.js](https://img.shields.io/badge/Next.js-14_·_15_·_16-000000?logo=nextdotjs&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-10_·_11-ea2845?logo=nestjs&logoColor=white)
