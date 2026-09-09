@@ -2,9 +2,9 @@
 
 <div align="center">
 
-# Congress Tech Systems
+# Production Systems Case Studies
 
-### A software ecosystem for end-to-end medical congress management
+### Eight production systems: registration and payments, real-time AI audio, IoT presence and on-demand printing
 
 **8 production systems, designed and built solo in five months** (January–May 2026), with an AI-augmented development workflow (Claude Code + phase-based planning methodology).
 
@@ -21,7 +21,7 @@
 
 ## 📖 What this repository is
 
-This repository **contains no source code**. It is an **archive of technical case studies** covering the work I did as the **sole developer** of the software stack at a Spanish medical-congress management company.
+This repository **contains no source code**. It is an **archive of technical case studies** covering the work I did as the **sole developer** of the entire software stack of a private Spanish company.
 
 The original repositories are **private and proprietary**. What you will find here is the **architecture documentation, technical decisions, solved challenges and outcomes** of each system — the material that usually only surfaces in a technical interview, compiled so that a recruiter or lead developer can assess the real scope of the work.
 
@@ -37,24 +37,24 @@ The entire ecosystem revolved around **FileMaker** as the business's operational
 flowchart TB
     subgraph CORE["🗄️ Business operational core"]
         FM[("FileMaker<br/>Data API<br/>internal source of truth")]
-        HEL[("Helice<br/>attendee directory")]
+        HEL[("External directory<br/>REST API")]
     end
 
-    subgraph REG["💳 Registration & accreditation"]
+    subgraph REG["💳 Registration & credentials"]
         IO["Online Registration v2<br/>sign-up + Redsys payments"]
-        BF["BadgeFlow<br/>badges + 3D kiosk"]
-        PW["Programa-Web<br/>PDF program / Gantt"]
+        BF["PrintFlow<br/>ID cards + 3D kiosk"]
+        PW["Schedule Builder<br/>PDF schedule / Gantt"]
     end
 
-    subgraph LIVE["🎙️ Live experience"]
+    subgraph LIVE["🎙️ Real-time layer"]
         AN["AudioNow<br/>AI multilingual audio streaming"]
-        CT["Congress Translation<br/>simultaneous translation PoC"]
-        BA["Beacon Attendance<br/>BLE attendance + AWS IoT"]
+        CT["Realtime Translation<br/>simultaneous translation PoC"]
+        BA["Beacon Presence<br/>BLE presence + AWS IoT"]
     end
 
     subgraph INTERNAL["🛠️ Tools & experiences"]
-        SC["Dinner Room<br/>interactive 2D/3D floor plan"]
-        LT["LogiTasks<br/>internal request manager"]
+        SC["Floor Planner<br/>interactive 2D/3D floor plan"]
+        LT["TaskBoard<br/>internal request manager"]
     end
 
     IO -- "additive queue fm_write_queue" --> FM
@@ -79,14 +79,14 @@ flowchart TB
 
 | System | What it solves | Core stack | Status |
 |---|---|---|---|
-| **[Online Registration v2](projects/inscripcion-online.md)** | Multi-event online registration and payments for medical congresses | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Core in production |
-| **[BadgeFlow](projects/badgeflow.md)** | Badge generation and printing with a 3D self-service kiosk | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Production (real congress) |
-| **[AudioNow](projects/audionow.md)** | Real-time multilingual audio streaming with AI translation | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Production (real events) |
-| **[Beacon Attendance](projects/beacon-attendance.md)** | Automatic attendance tracking via BLE beacons | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 Working MVP deployed |
-| **[Congress Translation](projects/congress-translation.md)** | Simultaneous voice translation for conference talks | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 delivered |
-| **[Programa-Web](projects/programa-web.md)** | Congress program generator (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Production |
-| **[LogiTasks](projects/logitasks.md)** | Internal request manager prioritized by team voting | Next.js 16 · Supabase Realtime · Resend | 🟢 Production (internal) |
-| **[Dinner Room](projects/sala-cenas.md)** | Interactive 2D/3D table-reservation floor plan | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Intern mentorship |
+| **[Online Registration v2](projects/online-registration.md)** | Multi-tenant online registration and payments | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Core in production |
+| **[PrintFlow](projects/printflow.md)** | ID card generation and printing with a 3D self-service kiosk | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Production (live deployment) |
+| **[AudioNow](projects/audionow.md)** | Real-time multilingual audio streaming with AI translation | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Production (live deployments) |
+| **[Beacon Presence](projects/ble-presence.md)** | Automatic presence tracking via BLE beacons | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 Working MVP deployed |
+| **[Realtime Translation](projects/realtime-translation.md)** | Simultaneous voice translation for live sessions | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 delivered |
+| **[Schedule Builder](projects/schedule-builder.md)** | Schedule generator from FileMaker (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Production |
+| **[TaskBoard](projects/taskboard.md)** | Internal request manager prioritized by team voting | Next.js 16 · Supabase Realtime · Resend | 🟢 Production (internal) |
+| **[Floor Planner](projects/floor-planner.md)** | Interactive 2D/3D seating floor plan | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Intern mentorship |
 
 ---
 
@@ -94,12 +94,12 @@ flowchart TB
 
 Beyond each individual project, the ecosystem as a whole demonstrates command of:
 
-- **Legacy system integration** — FileMaker as the operational source of truth: strict read-only access (Programa-Web), **additive, never-destructive** synchronization through a write queue (Online Registration), and multi-source reconciliation of Helice + FileMaker (BadgeFlow).
-- **Real-time** — WebRTC SFU with LiveKit (AudioNow, Congress Translation), Supabase Realtime (LogiTasks, Dinner Room), sub-500 ms IoT pipelines (Beacon Attendance).
+- **Legacy system integration** — FileMaker as the operational source of truth: strict read-only access (Schedule Builder), **additive, never-destructive** synchronization through a write queue (Online Registration), and multi-source reconciliation of an external directory API + FileMaker (PrintFlow).
+- **Real-time** — WebRTC SFU with LiveKit (AudioNow, Realtime Translation), Supabase Realtime (TaskBoard, Floor Planner), sub-500 ms IoT pipelines (Beacon Presence).
 - **AI integrations in production** — speech-to-speech translation with Palabra.ai, Azure Live Interpreter and OpenAI Realtime; floor-plan import with vision (GPT-4.1 + OpenCV + OCR).
 - **Payments** — Redsys payment gateway with HMAC-SHA256 signing, server-to-server webhooks and payment-attempt idempotency.
-- **PWA & offline-first** — Service Workers with Serwist, asset caching and IndexedDB to keep operating with no network at the venue itself.
-- **3D on the web** — React Three Fiber + Rapier (badge-lanyard physics in the kiosk), Three.js + drei (room editor).
+- **PWA & offline-first** — Service Workers with Serwist, asset caching and IndexedDB to keep operating with no network on site.
+- **3D on the web** — React Three Fiber + Rapier (card-lanyard physics in the kiosk), Three.js + drei (room editor).
 - **Infrastructure** — multi-stage Docker, AWS CDK (IaC), Vercel + Railway deployments, external workers.
 - **Security** — PostgreSQL RLS, `SECURITY DEFINER` RPCs, role hierarchies, `iron-session` sessions, rate limiting.
 
@@ -128,7 +128,7 @@ This entire ecosystem was built by **one person** in a matter of months. That wa
 
 **Alejandro González López** — Full-stack developer.
 
-Solely responsible for the company's software stack: architecture, development, integrations, deployments and operation of the 8 systems in this repository. Also responsible for mentoring an intern (see [Dinner Room](projects/sala-cenas.md)).
+Solely responsible for the company's software stack: architecture, development, integrations, deployments and operation of the 8 systems in this repository. Also responsible for mentoring an intern (see [Floor Planner](projects/floor-planner.md)).
 
 - 🌐 Portfolio: [aglwences.dev](https://aglwences.dev)
 - 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
@@ -138,6 +138,6 @@ Solely responsible for the company's software stack: architecture, development, 
 
 <div align="center">
 
-*Client names and sensitive data have been anonymized. This repository documents architecture and decisions — it contains no proprietary code.*
+*Client names, business domain and sensitive data have been deliberately omitted. This repository documents architecture and decisions — it contains no proprietary code.*
 
 </div>

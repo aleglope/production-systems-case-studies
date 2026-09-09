@@ -56,18 +56,18 @@ Decisions are referenced in the code itself: decision IDs (`D-XX`), numbered pit
 | Project | GSD phases | Verif. docs | Specs+Plans | Custom agents | `CLAUDE`/`AGENTS` |
 |---|---:|---:|---:|---:|:--|
 | Online Registration | 16 | 11 | 1 | — | ✓ / ✓ |
-| Congress Translation | 10 | 10 | — | — | ✓ / — |
-| BadgeFlow | 5 | 5 | 2 | — | ✓ / — |
-| Programa-Web | 4 | 4 | 2 | — | ✓ / — |
+| Realtime Translation | 10 | 10 | — | — | ✓ / — |
+| PrintFlow | 5 | 5 | 2 | — | ✓ / — |
+| Schedule Builder | 4 | 4 | 2 | — | ✓ / — |
 | AudioNow | — | — | **49** | **2** | — / — |
-| Beacon Attendance | 1 | — | — | — | ✓ / — |
-| LogiTasks | 1 | — | 2 | — | ✓ / ✓ |
-| Dinner Room | — | — | — | — | ✓ / ✓ |
+| Beacon Presence | 1 | — | — | — | ✓ / — |
+| TaskBoard | 1 | — | 2 | — | ✓ / ✓ |
+| Floor Planner | — | — | — | — | ✓ / ✓ |
 
 ---
 
 ## The result
 
-**One person's speed, a team's process rigor.** AI accelerates execution; architecture, decisions and verification remain the developer's responsibility. That same discipline was transferred to an **intern** I trained in AI tooling and 3D libraries (see [Dinner Room](projects/sala-cenas.md)).
+**One person's speed, a team's process rigor.** AI accelerates execution; architecture, decisions and verification remain the developer's responsibility. That same discipline was transferred to an **intern** I trained in AI tooling and 3D libraries (see [Floor Planner](projects/floor-planner.md)).
 
 > For each system's test suite, see **[TESTING.md](TESTING.md)**.

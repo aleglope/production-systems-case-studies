@@ -1,16 +1,16 @@
-<p align="right"><a href="programa-web.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="schedule-builder.es.md">🇪🇸 Versión en español</a></p>
 
-# Programa-Web
+# Schedule Builder
 
-> Congress program generator: it reads sessions straight from **FileMaker** (in **strictly read-only** mode) and renders a visual **Gantt** schedule exportable to **PDF**, with a resilient fallback if the API goes down.
+> Schedule generator: it reads sessions straight from **FileMaker** (in **strictly read-only** mode) and renders a visual **Gantt** schedule exportable to **PDF**, with a resilient fallback if the API goes down.
 
 ---
 
 ## Context & problem
 
-A congress program (sessions, talks, rooms, schedules) lives in FileMaker, maintained by the internal team. They needed to generate the **visual program document** — a clean, paginated, print-ready Gantt — **without moving the data out of FileMaker** and with zero risk of accidentally modifying it.
+The schedule (sessions, rooms, time slots) lives in FileMaker, maintained by the internal team. They needed to generate the **visual schedule document** — a clean, paginated, print-ready Gantt — **without moving the data out of FileMaker** and with zero risk of accidentally modifying it.
 
-The central constraint: the integration had to be **incapable of writing** to FileMaker, and the system had to keep working even if the Data API was down on congress day.
+The central constraint: the integration had to be **incapable of writing** to FileMaker, and the system had to keep working even if the Data API was down on the day it mattered most.
 
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
 |---|---|---|
 | **Read-only FileMaker Data API** | Type firewall: the client only exposes read operations | Makes writing to the shared database **impossible by design**, not by convention |
 | **Upstash Redis** | Single-flight token cache + graceful degradation if Redis is missing | The Data API token is reused with no race conditions; if the cache fails, the app keeps going |
-| **CSV fallback** | Manual upload of FileMaker's CSV export | On event day the Gantt gets generated even with the Data API down |
+| **CSV fallback** | Manual upload of FileMaker's CSV export | On the critical day the Gantt gets generated even with the Data API down |
 | **Next.js 15 RSC** | The FileMaker call happens in a Server Component | Credentials and logic never reach the browser |
 | **Strict TypeScript + Vitest** | Strict typing and a test suite with FileMaker mocks | Confidence when integrating against a critical legacy system |
 
@@ -52,7 +52,7 @@ flowchart LR
 ## Solved technical challenges
 
 - **Safe integration with a critical legacy system** — the read-only firewall pattern guarantees a bug can never corrupt the operational database.
-- **Event-day resilience** — dual path (live API + CSV fallback) and graceful cache degradation: the program can **always** be generated.
+- **Critical-day resilience** — dual path (live API + CSV fallback) and graceful cache degradation: the schedule can **always** be generated.
 - **Paginated Gantt-to-PDF rendering** — coordinating the session schema with a print-ready layout.
 - **CORS whitelist + rate limiting** on the endpoint FileMaker invokes.
 
@@ -60,7 +60,7 @@ flowchart LR
 
 ## Outcome & impact
 
-- **In production**, embedded in the team's real workflow (native FileMaker button → program PDF).
+- **In production**, embedded in the team's real workflow (native FileMaker button → schedule PDF).
 - **Metrics:** 57 Vitest tests (green) with FileMaker mocks · strict TypeScript · deployed on **Vercel** · Upstash Redis cache.
 - Complete design documentation (spec + implementation plan) following the ecosystem's development methodology.
 

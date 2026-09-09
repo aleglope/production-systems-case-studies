@@ -55,19 +55,19 @@ Las decisiones quedan referenciadas en el propio código: IDs de decisión (`D-X
 
 | Proyecto | Fases GSD | Verif. docs | Specs+Plans | Agentes propios | `CLAUDE`/`AGENTS` |
 |---|---:|---:|---:|---:|:--|
-| Inscripción Online | 16 | 11 | 1 | — | ✓ / ✓ |
-| Congress Translation | 10 | 10 | — | — | ✓ / — |
-| BadgeFlow | 5 | 5 | 2 | — | ✓ / — |
-| Programa-Web | 4 | 4 | 2 | — | ✓ / — |
+| Registro Online | 16 | 11 | 1 | — | ✓ / ✓ |
+| Realtime Translation | 10 | 10 | — | — | ✓ / — |
+| PrintFlow | 5 | 5 | 2 | — | ✓ / — |
+| Schedule Builder | 4 | 4 | 2 | — | ✓ / — |
 | AudioNow | — | — | **49** | **2** | — / — |
-| Beacon Attendance | 1 | — | — | — | ✓ / — |
-| LogiTasks | 1 | — | 2 | — | ✓ / ✓ |
-| Sala de Cenas | — | — | — | — | ✓ / ✓ |
+| Beacon Presence | 1 | — | — | — | ✓ / — |
+| TaskBoard | 1 | — | 2 | — | ✓ / ✓ |
+| Floor Planner | — | — | — | — | ✓ / ✓ |
 
 ---
 
 ## El resultado
 
-**Velocidad de una persona, rigor de proceso de un equipo.** La IA acelera la ejecución; la arquitectura, las decisiones y la verificación siguen siendo responsabilidad del desarrollador. Esa misma disciplina se transfirió a un **becario** al que formé en el uso de IA y librerías 3D (ver [Sala de Cenas](projects/sala-cenas.es.md)).
+**Velocidad de una persona, rigor de proceso de un equipo.** La IA acelera la ejecución; la arquitectura, las decisiones y la verificación siguen siendo responsabilidad del desarrollador. Esa misma disciplina se transfirió a un **becario** al que formé en el uso de IA y librerías 3D (ver [Floor Planner](projects/floor-planner.es.md)).
 
 > Para la batería de pruebas de cada sistema, ver **[TESTING.md](TESTING.es.md)**.

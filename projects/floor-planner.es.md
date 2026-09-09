@@ -1,19 +1,19 @@
-<p align="right"><a href="sala-cenas.md">🇬🇧 English version</a></p>
+<p align="right"><a href="floor-planner.md">🇬🇧 English version</a></p>
 
-# Sala de Cenas
+# Floor Planner
 
-> Plano interactivo **2D/3D** para la reserva de mesas en cenas de congreso: el asistente se identifica, ve la sala en tiempo real y elige su sitio. **Proyecto de mentoría** — desarrollado por un becario bajo mi dirección técnica.
+> Plano interactivo **2D/3D** para la reserva de plazas y mesas: la persona se identifica, ve la sala en tiempo real y elige su sitio. **Proyecto de mentoría** — desarrollado por un becario bajo mi dirección técnica.
 
 ---
 
 ## Contexto y problema
 
-Las cenas de gala de un congreso necesitan gestión de aforo y asignación de mesas. La idea: un plano **visual e interactivo** donde el asistente vea las mesas y sillas, su estado en tiempo real (libre / ocupada / seleccionada / asignada a él), y confirme su reserva — tanto desde su móvil como en un kiosco presencial con escáner QR.
+Sentar a mucha gente en una sala exige gestión de aforo y asignación de mesas. La idea: un plano **visual e interactivo** donde cada persona vea las mesas y sillas, su estado en tiempo real (libre / ocupada / seleccionada / asignada), y confirme su reserva — tanto desde su móvil como en un kiosco presencial con escáner QR.
 
 **Mi rol fue de mentor técnico, no de autor del código.** Tuve a mi cargo a un becario y este proyecto fue su vehículo de aprendizaje. Mi aportación consistió en:
 
 - Enseñarle a **trabajar con asistencia de IA** (Claude Code) de forma disciplinada.
-- Introducirle a las **librerías 3D/2D** del ecosistema (Three.js, React Three Fiber, drei, Konva) que yo ya usaba en BadgeFlow.
+- Introducirle a las **librerías 3D/2D** del ecosistema (Three.js, React Three Fiber, drei, Konva) que yo ya usaba en PrintFlow.
 - Definir la arquitectura de partida (Next.js + Supabase + Realtime) y revisar su evolución.
 
 ---
@@ -24,7 +24,7 @@ El proyecto arrancó como un plano 2D con `react-konva` y Supabase Realtime, y *
 
 ```mermaid
 flowchart TB
-    ID["Asistente se identifica<br/>código / QR"] --> ROOM["Carga la sala del evento"]
+    ID["La persona se identifica<br/>código / QR"] --> ROOM["Carga el plano de la sala"]
     ROOM --> VIEW{"Vista"}
     VIEW --> V2D["Plano 2D · Konva"]
     VIEW --> V3D["Sala 3D · Three.js + R3F + drei"]
@@ -52,7 +52,7 @@ flowchart TB
 | **Konva (2D) + Three.js/R3F (3D)** | Doble vista: plano 2D y sala 3D conmutables | Aprendizaje progresivo de 2D a 3D; mejor experiencia en kiosco presencial |
 | **Importador de planos con IA** | GPT-4.1 como capa principal de visión, con *fallback* determinista (OpenCV + Tesseract/PaddleOCR) | Convertir una imagen/PDF de plano en mesas y sillas estructuradas, con red de seguridad si la IA falla |
 | **Worker externo en Docker** | El OCR pesado y los procesos largos viven fuera de Vercel | Vercel no encaja con OCR pesado / Python / *filesystem* temporal; el worker consume una cola en Supabase |
-| **Flujo presencial con QR** | Escáner QR dedicado + controles táctiles/joystick para kiosco | Reserva en el propio evento, no solo desde el móvil del asistente |
+| **Flujo presencial con QR** | Escáner QR dedicado + controles táctiles/joystick para kiosco | Reserva en el propio emplazamiento, no solo desde el móvil |
 
 ---
 

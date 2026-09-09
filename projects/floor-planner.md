@@ -1,19 +1,19 @@
-<p align="right"><a href="sala-cenas.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="floor-planner.es.md">🇪🇸 Versión en español</a></p>
 
-# Dinner Room
+# Floor Planner
 
-> Interactive **2D/3D floor plan** for gala-dinner table reservations: attendees identify themselves, see the room in real time and pick their seat. **A mentorship project** — developed by an intern under my technical direction.
+> Interactive **2D/3D floor plan** for seat and table booking: users identify themselves, see the room in real time and pick their seat. **A mentorship project** — developed by an intern under my technical direction.
 
 ---
 
 ## Context & problem
 
-Congress gala dinners need capacity management and table assignment. The idea: a **visual, interactive floor plan** where attendees see tables and chairs, their real-time state (free / taken / selected / assigned to them), and confirm their reservation — from their phone or at an on-site kiosk with a QR scanner.
+Seating a large room needs capacity management and table assignment. The idea: a **visual, interactive floor plan** where users see tables and chairs, their real-time state (free / taken / selected / assigned to them), and confirm their booking — from their phone or at an on-site kiosk with a QR scanner.
 
 **My role was technical mentor, not code author.** I was responsible for an intern, and this project was their learning vehicle. My contribution consisted of:
 
 - Teaching them to **work with AI assistance** (Claude Code) in a disciplined way.
-- Introducing them to the **3D/2D libraries** of the ecosystem (Three.js, React Three Fiber, drei, Konva) that I was already using in BadgeFlow.
+- Introducing them to the **3D/2D libraries** of the ecosystem (Three.js, React Three Fiber, drei, Konva) that I was already using in PrintFlow.
 - Defining the starting architecture (Next.js + Supabase + Realtime) and reviewing its evolution.
 
 ---
@@ -24,7 +24,7 @@ The project started as a 2D floor plan with `react-konva` and Supabase Realtime,
 
 ```mermaid
 flowchart TB
-    ID["Attendee identifies<br/>code / QR"] --> ROOM["Loads the event room"]
+    ID["User identifies<br/>code / QR"] --> ROOM["Loads the room layout"]
     ROOM --> VIEW{"View"}
     VIEW --> V2D["2D plan · Konva"]
     VIEW --> V3D["3D room · Three.js + R3F + drei"]
@@ -52,7 +52,7 @@ flowchart TB
 | **Konva (2D) + Three.js/R3F (3D)** | Dual switchable views: 2D plan and 3D room | Progressive 2D-to-3D learning curve; better experience at the on-site kiosk |
 | **AI floor-plan importer** | GPT-4.1 as the primary vision layer, with a deterministic fallback (OpenCV + Tesseract/PaddleOCR) | Turns a plan image/PDF into structured tables and chairs, with a safety net if the AI fails |
 | **External Docker worker** | Heavy OCR and long-running jobs live outside Vercel | Vercel doesn't fit heavy OCR / Python / temp filesystems; the worker consumes a Supabase job queue |
-| **On-site QR flow** | Dedicated QR scanner + touch/joystick kiosk controls | Reservation at the event itself, not only from the attendee's phone |
+| **On-site QR flow** | Dedicated QR scanner + touch/joystick kiosk controls | Booking on site, not only from the user's phone |
 
 ---
 

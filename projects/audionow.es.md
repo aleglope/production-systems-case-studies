@@ -2,13 +2,13 @@
 
 # AudioNow
 
-> Plataforma de transmisión de audio multilingüe en tiempo real para eventos profesionales: captura el audio del técnico de sala, lo **traduce con IA** *speech-to-speech* y lo distribuye por WebRTC a oyentes en cualquier idioma. En producción sirviendo eventos reales.
+> Plataforma de transmisión de audio multilingüe en tiempo real para sesiones en directo: captura el audio del técnico de sala, lo **traduce con IA** *speech-to-speech* y lo distribuye por WebRTC a oyentes en cualquier idioma. En producción con tráfico real.
 
 ---
 
 ## Contexto y problema
 
-En un congreso con interpretación simultánea, el audio traducido debe llegar a **decenas o cientos de oyentes** en su idioma, en su propio móvil, **sin instalar nada y sin registrarse**. El reto técnico no es solo traducir: es hacerlo con **baja latencia, sin distorsión, para N idiomas a la vez**, y con un coste que no se dispare con el número de oyentes.
+En una sala con interpretación simultánea, el audio traducido debe llegar a **decenas o cientos de oyentes** en su idioma, en su propio móvil, **sin instalar nada y sin registrarse**. El reto técnico no es solo traducir: es hacerlo con **baja latencia, sin distorsión, para N idiomas a la vez**, y con un coste que no se dispare con el número de oyentes.
 
 ---
 
@@ -36,20 +36,20 @@ flowchart LR
 
 ---
 
-## Más allá del audio: plataforma de evento completa
+## Más allá del audio: plataforma de operación completa
 
-La traducción es el núcleo, pero AudioNow es la **plataforma operativa del evento**. Sobre la misma base (NestJS + Supabase + LiveKit) conviven varios subsistemas ya programados:
+La traducción es el núcleo, pero AudioNow es la **plataforma operativa de toda la sesión en directo**. Sobre la misma base (NestJS + Supabase + LiveKit) conviven varios subsistemas ya programados:
 
 - **Chat de control entre salas** — mensajería entre la organización y cada sala con tres vistas: *gestión* (`ChatManageView`), *monitorización* global (`ChatMonitorView`) y *participante* por sala (`ChatParticipantView`). Coordina a los técnicos de cada sala en directo, con notificaciones in-app.
-- **Vídeo del evento en directo** — streaming con dos vías: **Vimeo** (con un *proxy HLS* propio, `vimeo-hls-proxy`, que sirve el stream sin exponer credenciales) y **Agora** como alternativa. El oyente puede **ver la ponencia mientras escucha el audio traducido**.
-- **Grabación de sesiones** — módulo `recording` para registrar las sesiones del evento.
-- **Arquitectura de proveedor de traducción desacoplada, con dos motores reales** — una interfaz (`TranslationProviderInterface`) abstrae el motor de traducción. **Palabra.ai** corre en producción; **OpenAI Realtime** está implementado como segundo proveedor completo (módulo `openai-realtime` con tests unitarios), con **conmutación por evento** ya modelada en datos (`chat_events.translation_provider` + RPC + panel admin + *session log*) y **desplegado como *release* canary** (proyecto `audionow-canary`) para validarse en **producción con tráfico real controlado** antes de promoverlo a proveedor por defecto. La exploración de aún más motores (Azure, Gemini, Grok…) vive en el proyecto hermano **[Congress Translation](congress-translation.es.md)**.
+- **Vídeo en directo** — streaming con dos vías: **Vimeo** (con un *proxy HLS* propio, `vimeo-hls-proxy`, que sirve el stream sin exponer credenciales) y **Agora** como alternativa. El oyente puede **ver la sesión mientras escucha el audio traducido**.
+- **Grabación de sesiones** — módulo `recording` para registrar las sesiones en directo.
+- **Arquitectura de proveedor de traducción desacoplada, con dos motores reales** — una interfaz (`TranslationProviderInterface`) abstrae el motor de traducción. **Palabra.ai** corre en producción; **OpenAI Realtime** está implementado como segundo proveedor completo (módulo `openai-realtime` con tests unitarios), con **conmutación por sesión** ya modelada en datos (`chat_events.translation_provider` + RPC + panel admin + *session log*) y **desplegado como *release* canary** (proyecto `audionow-canary`) para validarse en **producción con tráfico real controlado** antes de promoverlo a proveedor por defecto. La exploración de aún más motores (Azure, Gemini, Grok…) vive en el proyecto hermano **[Realtime Translation](realtime-translation.es.md)**.
 
 > Diagrama — subsistemas que conviven sobre la misma plataforma.
 
 ```mermaid
 flowchart TB
-    EV["Evento en directo"] --> AUD["Audio traducido<br/>LiveKit · Palabra.ai + OpenAI"]
+    EV["Sesión en directo"] --> AUD["Audio traducido<br/>LiveKit · Palabra.ai + OpenAI"]
     EV --> VID["Vídeo en directo<br/>Vimeo · proxy HLS · Agora"]
     EV --> CHAT["Chat de control<br/>gestión · monitor · participante"]
     EV --> REC["Grabación de sesiones"]
@@ -83,13 +83,13 @@ flowchart TB
 - **Reconexión robusta a la IA.** *Watchdog* de silencio (10 s) + *backoff* exponencial reconectan automáticamente si el WebSocket de traducción se queda colgado.
 - **Perfiles de *playout*** (`balanced` / `low-latency` / `passthrough`) que ajustan el *jitter buffer* según el caso de uso (grabación vs. interpretación en vivo).
 - **Modelo de seguridad con jerarquía real** materializado en SQL: tabla de roles + RLS + RPC `SECURITY DEFINER` + trigger guardián de columnas.
-- **Dos motores de IA de distinto *sample rate* tras una sola interfaz** — Palabra (16 kHz) y OpenAI Realtime (24 kHz); el segundo exigió un *resampling* con filtro **FIR low-pass anti-aliasing** antes de la decimación 2:1, más conmutación de proveedor por evento sin reiniciar la sala.
+- **Dos motores de IA de distinto *sample rate* tras una sola interfaz** — Palabra (16 kHz) y OpenAI Realtime (24 kHz); el segundo exigió un *resampling* con filtro **FIR low-pass anti-aliasing** antes de la decimación 2:1, más conmutación de proveedor por sesión sin reiniciar la sala.
 
 ---
 
 ## Resultado e impacto
 
-- **En producción sirviendo eventos reales** de clientes (congresos médicos nacionales de varias especialidades, y eventos corporativos).
+- **En producción sirviendo tráfico real** de clientes, en varios despliegues a gran escala.
 - **Métricas:** 20 tablas · 77 funciones/triggers PostgreSQL · 76 migraciones · jerarquía de permisos 3-tier · *embed widgets* integrables en webs externas · despliegue **Vercel** (web) + **Railway** (API single-replica) + **Supabase**.
 - **Decisión de escala honesta:** la API mantiene el estado de sesiones en memoria y corre como réplica única; escalar horizontalmente requeriría externalizar sesiones a Redis — documentado como fuera del alcance del beta.
 

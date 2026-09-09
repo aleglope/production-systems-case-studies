@@ -1,14 +1,14 @@
-<p align="right"><a href="congress-translation.md">🇬🇧 English version</a></p>
+<p align="right"><a href="realtime-translation.md">🇬🇧 English version</a></p>
 
-# Congress Translation
+# Realtime Translation
 
-> Sistema de **traducción de voz simultánea** para ponencias de congreso: un ponente habla y 20+ asistentes reciben la traducción en su idioma en tiempo real. Arquitectura **multi-proveedor de IA** con conmutación transparente entre 7 motores de traducción.
+> Sistema de **traducción de voz simultánea** para sesiones en directo: quien habla emite y 20+ oyentes reciben la traducción en su idioma en tiempo real. Arquitectura **multi-proveedor de IA** con conmutación transparente entre 7 motores de traducción.
 
 ---
 
 ## Contexto y problema
 
-La interpretación simultánea humana es cara y no escala a varios idiomas a la vez. Este sistema explora hacerlo con IA: **1 ponente → N asistentes**, cada uno eligiendo su idioma, con latencia baja y calidad suficiente para una ponencia médica.
+La interpretación simultánea humana es cara y no escala a varios idiomas a la vez. Este sistema explora hacerlo con IA: **1 emisor → N oyentes**, cada uno eligiendo su idioma, con latencia baja y calidad suficiente para una sesión técnica.
 
 Como el mercado de IA de voz en tiempo real se mueve muy rápido (Azure, OpenAI, Google, Palabra, Grok… cada uno con compromisos distintos de latencia, calidad y coste), la decisión clave fue **no casarse con un proveedor** sino construir una arquitectura donde el motor de traducción es **intercambiable por sesión**.
 
@@ -18,7 +18,7 @@ Como el mercado de IA de voz en tiempo real se mueve muy rápido (Azure, OpenAI,
 
 ```mermaid
 flowchart LR
-    SP["🎙️ Ponente"] --> LK["LiveKit · WebRTC SFU"]
+    SP["🎙️ Emisor"] --> LK["LiveKit · WebRTC SFU"]
     LK --> BOT["NestJS · translator-bot por sala"]
     BOT --> REG{"ProviderRegistry<br/>motor por sesión"}
     REG --> AZ["Azure Speech /<br/>Live Interpreter v2"]
@@ -32,13 +32,13 @@ flowchart LR
     PAL --> OUT
     GRK --> OUT
     OUT --> LK
-    LK --> A1["👂 Asistente · idioma A"]
-    LK --> A2["👂 Asistente · idioma B"]
+    LK --> A1["👂 Oyente · idioma A"]
+    LK --> A2["👂 Oyente · idioma B"]
 
     style REG fill:#1e3a8a,color:#fff
 ```
 
-El frontend (Next.js 14) tiene modo **ponente** y modo **asistente**. El backend (NestJS) genera los tokens de LiveKit y las credenciales de proveedor **server-side** (ninguna *API key* llega al navegador), y un `ProviderRegistryService` basado en un *registry* enruta cada sesión al motor elegido vía `POST /api/translation/start { provider }`. La validación de DTOs con **Zod** es compartida entre frontend y backend (*type-safe* de extremo a extremo).
+El frontend (Next.js 14) tiene modo **emisor** y modo **oyente**. El backend (NestJS) genera los tokens de LiveKit y las credenciales de proveedor **server-side** (ninguna *API key* llega al navegador), y un `ProviderRegistryService` basado en un *registry* enruta cada sesión al motor elegido vía `POST /api/translation/start { provider }`. La validación de DTOs con **Zod** es compartida entre frontend y backend (*type-safe* de extremo a extremo).
 
 ---
 

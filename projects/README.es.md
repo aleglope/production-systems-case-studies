@@ -6,13 +6,13 @@ Cada documento sigue la misma estructura: **contexto y problema → solución y 
 
 | # | Proyecto | Una línea |
 |---|---|---|
-| 1 | [Inscripción Online v2](inscripcion-online.es.md) | Inscripción y pago online multi-evento para congresos médicos, con sincronización aditiva a FileMaker |
-| 2 | [BadgeFlow](badgeflow.es.md) | Generación e impresión de credenciales con kiosco 3D y modo offline |
+| 1 | [Registro Online v2](online-registration.es.md) | Registro y pago online multi-tenant, con sincronización aditiva a FileMaker |
+| 2 | [PrintFlow](printflow.es.md) | Generación e impresión de tarjetas identificativas con kiosco 3D y modo offline |
 | 3 | [AudioNow](audionow.es.md) | Streaming de audio multilingüe en tiempo real con traducción por IA |
-| 4 | [Beacon Attendance](beacon-attendance.es.md) | Asistencia automática por *beacons* BLE sobre una pipeline AWS IoT |
-| 5 | [Congress Translation](congress-translation.es.md) | Traducción de voz simultánea para ponencias, multi-proveedor de IA |
-| 6 | [Programa-Web](programa-web.es.md) | Generador del programa del congreso desde FileMaker (Gantt → PDF) |
-| 7 | [LogiTasks](logitasks.es.md) | Gestor interno de peticiones priorizadas por votación del equipo |
-| 8 | [Sala de Cenas](sala-cenas.es.md) | Plano interactivo 2D/3D de reservas (proyecto de mentoría) |
+| 4 | [Beacon Presence](ble-presence.es.md) | Detección automática de presencia por *beacons* BLE sobre una pipeline AWS IoT |
+| 5 | [Realtime Translation](realtime-translation.es.md) | Traducción de voz simultánea para sesiones en directo, multi-proveedor de IA |
+| 6 | [Schedule Builder](schedule-builder.es.md) | Generador de agenda desde FileMaker (Gantt → PDF) |
+| 7 | [TaskBoard](taskboard.es.md) | Gestor interno de peticiones priorizadas por votación del equipo |
+| 8 | [Floor Planner](floor-planner.es.md) | Plano interactivo 2D/3D de asignación de plazas (proyecto de mentoría) |
 
-> **Nota sobre confidencialidad.** Los nombres de asociaciones y congresos cliente se han sustituido por descriptores genéricos (p. ej. "congreso nacional de cardiología"). No se incluyen credenciales, dominios internos, URLs de producción ni datos de asistentes reales.
+> **Nota sobre confidencialidad.** Los nombres de los clientes y el sector en el que operan se omiten deliberadamente; los sistemas se describen por lo que hacen técnicamente. No se incluyen credenciales, dominios internos, URLs de producción ni datos personales reales.

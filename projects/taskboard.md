@@ -1,6 +1,6 @@
-<p align="right"><a href="logitasks.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="taskboard.es.md">🇪🇸 Versión en español</a></p>
 
-# LogiTasks
+# TaskBoard
 
 > Internal web tool for the team to propose, **vote on and prioritize** improvement requests. The technical lead sees clearly what to build first based on the team's votes. In production for internal use.
 
@@ -10,7 +10,7 @@
 
 When a single person carries all of a company's development, the bottleneck is **deciding what to do first**. Requests arrived through scattered channels (messages, emails, hallway conversations) with no way to prioritize them objectively.
 
-LogiTasks centralizes that flow: anyone on the team proposes an improvement, **the team votes on it**, and prioritization emerges from data rather than from whoever insists the loudest.
+TaskBoard centralizes that flow: anyone on the team proposes an improvement, **the team votes on it**, and prioritization emerges from data rather than from whoever insists the loudest.
 
 ---
 

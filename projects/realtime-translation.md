@@ -1,14 +1,14 @@
-<p align="right"><a href="congress-translation.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="realtime-translation.es.md">🇪🇸 Versión en español</a></p>
 
-# Congress Translation
+# Realtime Translation
 
-> **Simultaneous voice translation** for conference talks: one speaker talks and 20+ attendees receive the translation in their language in real time. A **multi-AI-provider** architecture with transparent switching across 7 translation engines.
+> **Simultaneous voice translation** for live sessions: one speaker talks and 20+ listeners receive the translation in their language in real time. A **multi-AI-provider** architecture with transparent switching across 7 translation engines.
 
 ---
 
 ## Context & problem
 
-Human simultaneous interpretation is expensive and doesn't scale to several languages at once. This system explores doing it with AI: **1 speaker → N attendees**, each picking their language, with low latency and quality good enough for a medical talk.
+Human simultaneous interpretation is expensive and doesn't scale to several languages at once. This system explores doing it with AI: **1 speaker → N listeners**, each picking their language, with low latency and quality good enough for a technical session.
 
 Because the real-time voice-AI market moves extremely fast (Azure, OpenAI, Google, Palabra, Grok… each with different latency/quality/cost trade-offs), the key decision was **not to marry a provider** but to build an architecture where the translation engine is **swappable per session**.
 
@@ -32,13 +32,13 @@ flowchart LR
     PAL --> OUT
     GRK --> OUT
     OUT --> LK
-    LK --> A1["👂 Attendee · language A"]
-    LK --> A2["👂 Attendee · language B"]
+    LK --> A1["👂 Listener · language A"]
+    LK --> A2["👂 Listener · language B"]
 
     style REG fill:#1e3a8a,color:#fff
 ```
 
-The frontend (Next.js 14) has **speaker** and **attendee** modes. The backend (NestJS) mints LiveKit tokens and provider credentials **server-side** (no API key ever reaches the browser), and a registry-based `ProviderRegistryService` routes each session to the chosen engine via `POST /api/translation/start { provider }`. **Zod** DTO validation is shared between frontend and backend (type-safe end to end).
+The frontend (Next.js 14) has **speaker** and **listener** modes. The backend (NestJS) mints LiveKit tokens and provider credentials **server-side** (no API key ever reaches the browser), and a registry-based `ProviderRegistryService` routes each session to the chosen engine via `POST /api/translation/start { provider }`. **Zod** DTO validation is shared between frontend and backend (type-safe end to end).
 
 ---
 
