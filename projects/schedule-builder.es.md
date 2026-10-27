@@ -2,38 +2,45 @@
 
 # Schedule Builder
 
-> Generador de agenda: lee las sesiones directamente de **FileMaker** (en modo **estrictamente solo lectura**) y renderiza un esquema/**Gantt** visual exportable a **PDF**, con un *fallback* resiliente si la API cae.
+> Generador de agenda que mantiene **FileMaker como fuente canónica**, lee sesiones mediante un cliente de aplicación restringido y produce un **Gantt/PDF** paginado. La carga manual de CSV ofrece una alternativa cuando la integración en vivo no está disponible.
+
+## Mi contribución y alcance entregado
+
+- **Mi contribución:** implementación de la integración FileMaker, normalización de sesiones, recorrido de datos entre servidor y cliente y flujo de Gantt a PDF.
+- **Alcance entregado:** apertura desde un botón de FileMaker, consulta de sesiones en servidor, token compartido mediante Redis, carga manual de CSV y exportación PDF.
+- **Estado histórico — 26 de mayo de 2026:** había un despliegue Vercel documentado y un flujo FileMaker→PDF verificado de extremo a extremo. Quedaban comprobaciones de algunos campos reales y de paridad de datos.
 
 ---
 
 ## Contexto y problema
 
-La agenda (sesiones, salas, franjas horarias) vive en FileMaker, que el equipo interno mantiene. Necesitaban generar el **documento visual de la agenda** — un Gantt limpio, paginado, listo para imprimir — **sin sacar los datos de FileMaker** ni arriesgarse a modificarlos por accidente.
+El equipo interno mantenía sesiones, salas y franjas horarias en FileMaker. Necesitaba una **agenda visual lista para imprimir** sin crear un segundo sistema de edición de esos datos.
 
-La restricción central: la integración debía ser **incapaz de escribir** en FileMaker, y el sistema debía seguir funcionando aunque la Data API estuviera caída el día crítico.
+La integración debía limitar las escrituras accidentales desde la aplicación y conservar una alternativa para generar el documento el día del evento. De ahí surgieron dos entradas de datos que alimentan el mismo modelo de agenda: la Data API y un CSV exportado que aporta una persona.
 
 ---
 
 ## Solución y arquitectura
 
-Un trabajador pulsa un botón **dentro de FileMaker**, que abre esta app con el `?evento=<Id>` en la URL. La app resuelve las sesiones contra la FileMaker Data API en modo solo lectura, las cachea y renderiza el Gantt exportable a PDF.
+Un botón dentro de FileMaker abre la app con `?evento=<Id>`. Un Server Component de Next.js consulta `/api/sesiones`; ese **Route Handler** llama al wrapper FileMaker y normaliza la respuesta. El navegador recibe los datos de sesiones para el Gantt interactivo y la exportación PDF. Redis guarda el **token de la Data API y el bloqueo de renovación**.
 
 ```mermaid
-flowchart LR
-    BTN["Botón en FileMaker"] -- "?evento=Id" --> APP["Next.js 15 · App Router"]
-    APP --> API["/api/sesiones · RSC server-side"]
-    API --> FMRO["fmReadOnly.find<br/>firewall de tipos · solo lectura"]
+flowchart TB
+    BTN["Botón FileMaker"] -- "?evento=Id" --> RSC["Next.js 15<br/>página RSC"]
+    RSC -- "petición HTTP" --> API["Route Handler<br/>/api/sesiones"]
+    API --> FMRO["Wrapper FileMaker<br/>lectura de registros · descarga de contenedores"]
     FMRO --> FM[("FileMaker Data API")]
-    API --> CACHE[("Upstash Redis<br/>single-flight token cache")]
-    API --> GANTT["Render Gantt · V1/V4"]
-    GANTT --> PDF["Exportar PDF"]
-
-    FM -. "si la API cae" .-> CSV["Fallback:<br/>subir CSV exportado a mano"]
-    CSV --> GANTT
+    FMRO --> CACHE[("Upstash Redis<br/>token + bloqueo de renovación")]
+    API -- "JSON de sesiones vía RSC" --> CLIENT["Componente cliente"]
+    CSV["La persona sube<br/>un CSV exportado disponible"] --> CLIENT
+    CLIENT --> GANTT["Gantt interactivo"]
+    GANTT --> PDF["Exportación PDF"]
 
     style FM fill:#1f2937,color:#fff
     style CACHE fill:#7c2d12,color:#fff
 ```
+
+*Recorridos de datos implementados. La entrada alternativa CSV requiere un archivo válido y una intervención del usuario.*
 
 ---
 
@@ -41,31 +48,32 @@ flowchart LR
 
 | Tecnología | Decisión | Por qué |
 |---|---|---|
-| **FileMaker Data API solo lectura** | *Firewall* de tipos: el cliente solo expone operaciones de lectura | Hace **imposible** escribir en la base compartida, por diseño y no por convención |
-| **Upstash Redis** | *Single-flight token cache* + degradación elegante si Redis no está | El token de la Data API se reutiliza sin condiciones de carrera; si falla la cache, la app sigue |
-| **Fallback CSV** | Subida manual del CSV exportado por FileMaker | El día crítico el Gantt se genera aunque la Data API esté caída |
-| **Next.js 15 RSC** | La llamada a FileMaker ocurre en *Server Component* | Credenciales y lógica nunca llegan al navegador |
-| **TypeScript estricto + Vitest** | Tipado estricto y suite de tests con *mocks* de FileMaker | Confianza para integrar con un sistema legacy crítico |
+| **Wrapper FileMaker restringido** | Exponer lectura de registros y descarga de contenedores, sin métodos de escritura de registros ni scripts | Reduce la superficie de escrituras accidentales desde la aplicación; los privilegios de la cuenta del servidor son un control separado |
+| **Upstash Redis** | Compartir el token y serializar renovaciones mediante un bloqueo single-flight | Limita los inicios de sesión concurrentes entre instancias; admite renovación directa cuando Redis no está configurado |
+| **Fallback CSV manual** | Interpretar en el navegador un archivo previamente exportado desde FileMaker | Permite generar el documento sin la API en vivo cuando hay un archivo válido disponible |
+| **Next.js RSC + Route Handler** | Obtener los datos iniciales en servidor y mantener la interacción en un componente cliente | Conserva las credenciales FileMaker en servidor y permite interacción y exportación en navegador |
+| **TypeScript estricto + Vitest** | Compartir tipos de sesión y probar los mapeos con mocks de FileMaker | Hace explícitas las reglas de normalización de ambas entradas |
 
 ---
 
-## Retos técnicos resueltos
+## Retos técnicos abordados
 
-- **Integración segura con un sistema legacy crítico** — el patrón de *firewall* de solo lectura garantiza que un bug nunca pueda corromper la base operativa.
-- **Resiliencia para el día crítico** — doble camino (API en vivo + *fallback* CSV) y degradación elegante de la cache: la agenda **siempre** se puede generar.
-- **Render Gantt paginado a PDF** — coordinación entre el esquema de sesiones y un layout imprimible.
-- **CORS *whitelist* + rate limiting** sobre el *endpoint* que FileMaker invoca.
+- **Integración legacy con menor superficie de escritura:** la aplicación importa un wrapper limitado a operaciones de lectura.
+- **Dos entradas y un modelo de agenda:** registros API y filas CSV alimentan el mismo flujo de renderizado, con normalización de fechas, horas y texto.
+- **Coordinación del token:** una caché compartida y un bloqueo de renovación reducen la creación duplicada de sesiones. Una caída del Redis configurado puede interrumpir la consulta en vivo; el CSV manual sigue siendo una alternativa separada.
+- **Salida PDF paginada:** coordinación del layout de sesiones y el tratamiento del texto con un documento imprimible.
+- **Controles del endpoint:** allowlist CORS y limitación de peticiones sobre la ruta API.
 
 ---
 
-## Resultado e impacto
+## Resultado y validación
 
-- **En producción**, integrado en el flujo real del equipo (botón nativo en FileMaker → PDF de la agenda).
-- **Métricas:** 57 tests Vitest (en verde) con *mocks* de FileMaker · TypeScript estricto · despliegue en **Vercel** · cache en Upstash Redis.
-- Documentación de diseño completa (spec + plan de implementación) siguiendo la metodología de desarrollo del ecosistema.
+El **registro de verificación del 26 de mayo de 2026 informó de 58 pruebas Vitest aprobadas**, con comportamientos de integración simulados, y una comprobación TypeScript satisfactoria. Otro registro de aceptación documentó una exportación real FileMaker → API → Gantt → PDF para un evento. La variante de sesiones con patrocinador se revisó mediante código, sin probarla visualmente en esa ejecución de aceptación.
+
+La herramienta entregada conectó el flujo existente de FileMaker con una agenda imprimible, conservando una entrada manual. La confirmación de algunos campos reales y la paridad completa de visualización API/CSV quedaron fuera de esa comprobación cerrada. Los registros describen la versión entregada en mayo de 2026.
 
 ---
 
 ## Competencias demostradas
 
-`Next.js 15 (RSC)` · `FileMaker Data API` · `Upstash Redis` · `generación de PDF` · `diseño resiliente (fallback)` · `TypeScript estricto` · `Vitest` · `Vercel`
+`Next.js 15 (RSC + Route Handlers)` · `FileMaker Data API` · `Upstash Redis` · `generación de PDF` · `normalización de datos` · `diseño de fallback manual` · `TypeScript estricto` · `Vitest` · `Vercel`

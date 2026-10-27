@@ -1,51 +1,46 @@
-<p align="right"><a href="TESTING.md">🇬🇧 English version</a></p>
+<p align="right"><a href="TESTING.md">English version</a></p>
 
-# Testing y calidad
+# Pruebas y validación
 
-Enfoque de pruebas a lo largo del ecosistema, con **datos reales** (conteo de archivos de test por proyecto, excluyendo dependencias). No es una afirmación genérica de "tiene tests": es el inventario verificado.
+Este apéndice separa **activos de prueba**, **ejecuciones registradas con fecha** y **validación operativa**. Un recuento de archivos describe el tamaño de la suite, no cobertura ni una ejecución aprobada. Los registros siguientes corresponden a versiones históricas; no se han vuelto a ejecutar las aplicaciones para preparar esta actualización documental.
 
-## Resumen
+## Comportamientos y fronteras
 
-**~314 archivos de test** repartidos así:
+| Caso | Qué abordan las pruebas o comprobaciones | Límite de esa evidencia |
+|---|---|---|
+| [Registro Online](projects/online-registration.es.md) | Identidad y aislamiento de tenant, intentos de pago, acciones de reintento, OTP y contratos de handlers de cola | Los servicios mockeados no validan la pasarela, el SMS ni la activación FileMaker en producción |
+| [AudioNow](projects/audionow.es.md) | Procesamiento de audio, resampling, clientes de proveedor y ciclo de sesiones | La rama principal y la de validación OpenAI difieren; las pruebas unitarias no acreditan calidad perceptual ni tráfico canary |
+| [PrintFlow](projects/printflow.es.md) | Comprobaciones de entrega de generación, conciliación, kiosco e impresión; infraestructura de tests configurada | La cobertura automática seguía como trabajo de desarrollo; la extensión de vídeo offline tenía un checkpoint humano propio |
+| [Beacon Presence](projects/ble-presence.es.md) | Transiciones de filtro/estado, agregación, harness local y escenarios E2E/carga configurados | La configuración de un escenario no es un resultado de carga ejecutada ni una medición de precisión física |
+| [Realtime Translation](projects/realtime-translation.es.md) | Registry de proveedores, orquestación de sesiones, fronteras API y perfiles de voz con mocks | Las pruebas reales/perceptuales y funciones con acceso restringido tienen gates separados |
+| [Schedule Builder](projects/schedule-builder.es.md) | Mapeo, normalización de fechas/texto, integración legacy con mocks y comprobaciones PDF | Un flujo PDF verificado no acredita paridad de cada campo de origen y variante de diseño |
+| [TaskBoard](projects/taskboard.es.md) | Componentes, reglas de negocio y comportamiento de email con mocks | El email mockeado no prueba entrega a destinatarios reales ni activación de la migración de producción |
+| [Floor Planner](projects/floor-planner.es.md) | Esta ficha documenta mentoría y el flujo de editor/importación implementado | No afirma una suite automática validada de forma independiente para la implementación del becario |
 
-| Proyecto | Archivos de test | Framework(s) | Tipos de prueba |
-|---|---:|---|---|
-| **[Registro Online](projects/online-registration.es.md)** | **127** | Vitest · Testing Library | Invariantes de datos, Server Actions de ambos flujos, cola FileMaker, OTP, regresiones de seguridad (CSRF/XSS) |
-| **[Realtime Translation](projects/realtime-translation.es.md)** | **86** | Jest · Supertest | Unit + integración de API, proveedores de traducción |
-| **[AudioNow](projects/audionow.es.md)** | **38** | Vitest · Testing Library | Pipeline de audio, *soft-limiter*, sesiones de traducción |
-| **[Beacon Presence](projects/ble-presence.es.md)** | **32** | Jest · Playwright · Artillery | Unit + **E2E** + **carga** (hasta 200 rps) |
-| **[TaskBoard](projects/taskboard.es.md)** | **24** | Vitest · Testing Library | Componentes, votación, notificaciones |
-| **[Schedule Builder](projects/schedule-builder.es.md)** | **7** (57 casos) | Vitest · Testing Library | Lógica + *mocks* de FileMaker |
-| **[PrintFlow](projects/printflow.es.md)** | infra configurada | Jest · Supertest | Infraestructura lista; cobertura automatizada como deuda posterior al despliegue |
-| **[Floor Planner](projects/floor-planner.es.md)** | — | — | Proyecto de mentoría/aprendizaje |
+## Ejecuciones históricas seleccionadas
 
-> **Honestidad:** PrintFlow salió a producción contra una fecha de salida fija e inamovible; tiene la infraestructura de test (Jest + Supertest) configurada pero priorizó la entrega, dejando la cobertura automatizada como deuda consciente. Floor Planner era el vehículo de aprendizaje de un becario. El resto del ecosistema sí tiene cobertura sustancial.
+Son resúmenes de registros internos de proyecto, no resultados ejecutados ahora ni un paquete público de reproducción. Las fechas identifican la comprobación registrada; no garantizan que el servicio actual conserve el mismo estado.
 
-## Detalle por proyecto
+| Caso y registro | Fecha | Resultado registrado | Alcance y comprobaciones pendientes |
+|---|---|---|---|
+| Registro Online, verificación de fase M3 | 29 de mayo de 2026 | 881 aprobadas, 2 omitidas, 1 fallida | Criterios de fase y correcciones documentados; deuda de tipado/tests y comprobaciones de integración real registradas por separado |
+| Schedule Builder, verificación de remediación | 26 de mayo de 2026 | 58 pruebas aprobadas; typecheck registrado | También consta evidencia PDF de extremo a extremo; algunas comprobaciones de paridad de campos seguían pendientes |
+| Realtime Translation, verificación de perfiles de voz | 28 de abril de 2026 | 296 pruebas aprobadas en la ejecución registrada | Perfiles/API probados con mocks; acceso restringido y comprobaciones perceptuales separados |
 
-### Registro Online — 127 archivos · 881 tests
-La suite cubre los **invariantes que importan** en un sistema de pagos:
-- Unicidad de `Persona` por asociación, idempotencia de `Pago` (mismo `id_intento` no duplica fila), máquina de estados de `Inscripción`.
-- **Anti-suplantación**: no se exponen datos personales sin un OTP exitoso.
-- *Server Actions* de los flujos individual y grupal, *handlers* de la cola `fm_write_queue`, mensajería OTP.
-- Regresiones de seguridad (CSRF/XSS).
+Los resúmenes posteriores pueden citar totales distintos. No se combinan ramas, hitos o fechas. Por ejemplo, una ejecución afirmada en un resumen no se atribuye a un verificador que indica expresamente que no ejecutó la suite.
 
-### Beacon Presence — 32 archivos · unit + E2E + carga
-El proyecto con la pirámide de test más completa:
-- **Unit** (Jest): suites exhaustivas — p. ej. 47 casos en el detector de zonas (transiciones de estado, histéresis), 47 en el agregador de presencia (puntos, bonus), 18 en el filtro de Kalman.
-- **E2E** (Playwright).
-- **Carga** (Artillery): escenarios hasta 200 rps con fases *warm-up → ramp-up → sustained → peak*.
-- Todo orquestado en **CI/CD** (GitHub Actions: lint, typecheck, unit, E2E, carga, `cdk synth`).
+## Escenarios para explicar en una entrevista
 
-### Realtime Translation — 86 archivos
-Unit + integración de la API NestJS (Supertest), cubriendo el *registry* de proveedores y la orquestación de sesiones de traducción.
+- **Reintentos de pago:** reutilizar la identidad del intento, validar propiedad y distinguir reintento de una orden nueva para el gateway. Las restricciones de base de datos, los tests de acciones con mocks y la pasarela real ofrecen garantías de tipos distintos.
+- **Sesiones de audio:** cambios concurrentes de idioma, parada y reconexión pueden dejar clientes externos vivos. Los tests de ciclo de vida abordan propiedad y limpieza; el acceso al proveedor y la escucha abordan la salida real.
+- **Presencia:** RSSI ruidoso, pasos breves junto a una puerta y periodos de gracia ejercitan una máquina de estados. Alcance físico, precisión y latencia de extremo a extremo necesitan un experimento con hardware medido.
+- **Impresión:** los recursos locales preparados y los cambios de estado en cola abordan la pérdida de red. Una llamada de impresión satisfactoria no es un recibo físico de la impresora.
+- **Exportación legacy:** registros válidos e inválidos, fallback CSV manual e inspección de un PDF real prueban fronteras distintas.
 
-### AudioNow — 38 archivos
-Foco en el *pipeline* de audio: limitador *soft-knee*, *resampling*, ciclo de vida de las sesiones de traducción y el *bridge* con LiveKit. Incluye los `*.spec.ts` del módulo `openai-realtime` (en la rama canary).
+## Convenciones del inventario
 
-### TaskBoard — 24 · Schedule Builder — 7 (57 casos)
-Cobertura de componentes y lógica de negocio; en Schedule Builder, con *mocks* de la FileMaker Data API para probar la integración sin tocar el sistema real.
+Cuando una ficha incluye un recuento de implementación, pertenece a la versión y al perímetro indicados. Archivos, casos individuales, herramientas configuradas y comprobaciones ejecutadas son unidades distintas. Los archivos generados, dependencias y copias entre ramas no deben inflar un total combinado.
 
-## Frameworks y herramientas
+Los inventarios se acotan a una versión y método de recuento, sin combinar ramas incompatibles. El foco está en la invariante, el resultado registrado y su límite.
 
-`Vitest` · `Jest` · `ts-jest` · `Supertest` · `Playwright (E2E)` · `Artillery (carga)` · `@testing-library/react` · `@testing-library/user-event` · `jsdom` · `GitHub Actions (CI/CD)`
+[Metodología](METHODOLOGY.es.md) · [Stack y contribución](STACK.es.md) · [Resumen](README.es.md)

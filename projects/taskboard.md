@@ -2,32 +2,45 @@
 
 # TaskBoard
 
-> Internal web tool for the team to propose, **vote on and prioritize** improvement requests. The technical lead sees clearly what to build first based on the team's votes. In production for internal use.
+> An internal tool for proposing, **voting on and prioritizing** improvement requests. It brings requests, discussion and status changes into one workflow, designed for a team of roughly twenty people.
+
+## My contribution & delivered scope
+
+- **My contribution:** implementation of the request and voting workflow, permissions, notifications and integration with a shared Supabase environment.
+- **Delivered scope:** requests with photos, mutually exclusive vote types, comments, linked requests, search, admin controls and in-app notifications; an email mirror was subsequently implemented.
+- **Historical stage — 13 May 2026:** the internal application had a documented Vercel deployment. The latest email-delivery note left its database migration and production activation as manual cutover steps.
 
 ---
 
 ## Context & problem
 
-When a single person carries all of a company's development, the bottleneck is **deciding what to do first**. Requests arrived through scattered channels (messages, emails, hallway conversations) with no way to prioritize them objectively.
+Improvement requests arrived through messages, emails and informal conversations. That made it difficult to retain the context, compare demand and explain which request should come next.
 
-TaskBoard centralizes that flow: anyone on the team proposes an improvement, **the team votes on it**, and prioritization emerges from data rather than from whoever insists the loudest.
+TaskBoard gives the team one place to **propose, vote and discuss**. Vote aggregates inform prioritization, while an administrator can pin a request and move it through `Pending → In Progress → Done`. The intended scale was an internal team.
 
 ---
 
 ## Solution & architecture
 
+Next.js Server Actions validate changes and persist them in Supabase. Notification creation first inserts an in-app record; after a successful insert, the helper **awaits an email attempt**. For multiple recipients, those attempts run in series. Realtime delivers database updates to the notification UI independently of the email path.
+
 ```mermaid
 flowchart TB
-    USER["Team · ≈20 users"] --> APP["Next.js 16 · App Router<br/>Server Actions + RSC"]
-    APP --> SUPA[("Supabase<br/>PostgreSQL · Auth · Storage · Realtime")]
-    SUPA -- "WebSocket" --> RT["Real-time notifications<br/>badge · bell"]
-    APP --> RESEND["Resend + React Email<br/>3 templates"]
-    APP --> ADMIN["Admin panel<br/>pin · status · users"]
+    USER["Internal team<br/>designed for roughly 20 people"] --> APP["Next.js 16 · App Router<br/>Server Actions + RSC"]
+    APP --> SUPA[("Supabase<br/>Auth · requests · votes · Storage")]
+    APP --> ADMIN["Admin controls<br/>pin · status · users"]
+    APP --> NOTIF[("Insert in-app notification")]
+    NOTIF -- "Realtime" --> RT["Client notification UI<br/>badge · bell"]
+    NOTIF -- "after successful insert" --> EMAIL["Await email attempt<br/>Resend + React Email"]
+    EMAIL -- "on error" --> LOG["Log delivery error<br/>without propagating it to the action"]
 
     style SUPA fill:#065f46,color:#fff
+    style NOTIF fill:#065f46,color:#fff
 ```
 
-Each request has a title, description and up to 3 photos; the team votes (1–5 or a negative vote), comments, links related requests and receives **real-time notifications** (in-app via Supabase Realtime + email via Resend). The admin pins priority requests, changes their status (`Pending → In Progress → Done`) and manages users.
+*Implemented notification flow. Email attempts are sequential and awaited; the latest delivery note still required production activation.*
+
+Each request includes a title, description and up to three photos. Users can vote positively (1–5) or negatively, comment and link related requests. The admin manages status, pinned items and users.
 
 ---
 
@@ -35,32 +48,33 @@ Each request has a title, description and up to 3 photos; the team votes (1–5 
 
 | Technology | Decision | Why |
 |---|---|---|
-| **Supabase (Realtime + RLS)** | WebSocket subscriptions for badges, RLS on every table | Instant notifications with row-level data isolation |
-| **Zod v4 `discriminatedUnion`** | Votes modeled as a discriminated union (1–5 *xor* negative) | Mutual exclusivity guaranteed at validation level, not just in the UI |
-| **TanStack Query (optimistic mutations)** | The voting UI updates instantly with rollback on error | Voting needs immediate feedback to feel fluid |
-| **Server Actions + `revalidatePath`** | Mutations without an explicit REST API, validated server-side | Less boilerplate, shared Zod validation |
-| **Fire-and-forget notifications** | An email failure never blocks the Server Action | The user's action never fails because of an email problem |
-| **Link anti-duplication** | `CHECK (petition_a_id < petition_b_id)` + unique index | Prevents linking A→B and B→A separately, enforced at database level |
+| **Supabase Realtime + RLS** | Subscribe to notification changes and enforce row-level policies | Combines live UI updates with database-level access rules |
+| **Zod v4 discriminated unions** | Model a vote as positive (1–5) or negative, never both | Enforces mutual exclusivity in validation as well as the UI |
+| **TanStack Query** | Optimistic vote updates with rollback on error | Gives immediate feedback while retaining a recovery path |
+| **Server Actions + revalidation** | Validate mutations server-side and refresh the relevant views | Keeps the mutation flow within the Next.js application |
+| **Email error isolation** | Await email attempts but catch and log their failures | A delivery error is not returned as a failure of the saved request; waiting for delivery still adds latency |
+| **Link anti-duplication** | Sorted-pair constraint and a unique index | Prevents representing A→B and B→A as two separate links |
 
 ---
 
-## Solved technical challenges
+## Technical challenges addressed
 
-- **Real-time + email combined:** a `createNotification()` helper fires the in-app notification and the email in parallel, with per-user opt-in.
-- **Objective prioritization** from vote aggregates, with a unique `(user_id, petition_id)` index preventing double votes.
-- **Multi-app coexistence on one Supabase instance:** table renames (`votes → petition_votes`) and migration consolidation to avoid collisions with another ecosystem app, keeping isolation through RLS.
-- **Fuzzy search** with PostgreSQL's `pg_trgm` extension (no Elasticsearch).
+- **Vote integrity:** validation separates positive and negative votes, and a unique user/request pair prevents duplicate votes.
+- **Shared database integration:** table renaming and migration consolidation allow coexistence with another application while retaining access policies.
+- **Notification preferences:** the email mirror uses three React Email templates. The preference is enabled by default and users can opt out. Delivery is best effort, with errors logged and no persistent retry queue.
+- **Search without a separate search service:** PostgreSQL's `pg_trgm` supports fuzzy request search.
+- **Comment history:** the application models comments as immutable entries rather than editable messages.
 
 ---
 
-## Outcome & impact
+## Outcome & validation
 
-- **In production** for the internal team (~20 users), deployed on **Vercel**.
-- **Metrics:** 8 core tables · 15 migrations · 11 development phases completed (100%) · modern Next.js 16 + React 19 stack.
-- **Immutable comments** (no `updated_at`) as a simple audit decision.
+The delivered scope covers the team's **request → vote → discussion → status** workflow and its integration with shared authentication and data infrastructure. Database constraints, server validation and optimistic updates address different parts of that workflow: integrity, authorization and immediate feedback.
+
+The **13 May 2026 email verification recorded 15 passing mocked tests** for templates, opt-out behavior, helper integration and failure handling. The migration and production cutover remained manual follow-up work in that record. The roughly twenty-person team describes the intended audience of this version.
 
 ---
 
 ## Skills demonstrated
 
-`Next.js 16` · `React 19` · `Supabase (Realtime, RLS, Auth, Storage)` · `TanStack Query` · `Zod v4` · `Resend + React Email` · `PostgreSQL (pg_trgm)` · `Server Actions` · `Vercel`
+`Next.js 16` · `React 19` · `Supabase (Realtime, RLS, Auth, Storage)` · `TanStack Query` · `Zod v4` · `Resend + React Email` · `PostgreSQL (pg_trgm)` · `Server Actions` · `shared database integration` · `Vercel`

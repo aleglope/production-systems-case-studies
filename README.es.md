@@ -1,143 +1,63 @@
-<p align="right"><a href="README.md">🇬🇧 English version</a></p>
-
-<div align="center">
+<p align="right"><a href="README.md">English version</a></p>
 
 # Production Systems Case Studies
 
-### Ocho sistemas en producción: registro y pagos, audio con IA en tiempo real, presencia IoT e impresión bajo demanda
+**Ocho casos profesionales de ingeniería: registro y pagos, audio multilingüe, impresión bajo demanda, presencia IoT y herramientas internas.**
 
-**8 sistemas en producción, diseñados y construidos en solitario en cinco meses** (enero–mayo 2026), con un flujo de desarrollo *AI-augmented* (Claude Code + metodología de planificación por fases).
+Este archivo presenta mi trabajo de arquitectura, implementación, integración y mentoría técnica. Cada caso explica el problema, mi contribución, las decisiones de la solución y el alcance entregado.
 
-![Next.js](https://img.shields.io/badge/Next.js-14_·_15_·_16-000000?logo=nextdotjs&logoColor=white)
-![NestJS](https://img.shields.io/badge/NestJS-10_·_11-ea2845?logo=nestjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase_·_Prisma_·_Drizzle-4169E1?logo=postgresql&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-CDK_·_IoT_·_Lambda-232F3E?logo=amazonaws&logoColor=white)
-![FileMaker](https://img.shields.io/badge/FileMaker-Data_API-555?logo=claris&logoColor=white)
+Los repositorios originales son privados. Este archivo contiene documentación técnica, sin código fuente ni datos del cliente. Las fichas describen versiones y entregas históricas de 2026; no implican que actualmente opere los servicios.
 
-</div>
+## Empieza por aquí
 
----
+- **[AudioNow](projects/audionow.es.md)** — audio WebRTC, integración de proveedores de traducción y ciclo de sesiones. Para profundizar en tiempo real e integración de IA.
+- **[Registro Online v2](projects/online-registration.es.md)** — dos flujos de compra, reintentos de pago y convivencia con un sistema heredado. Para profundizar en producto full-stack e integración de datos.
+- **[PrintFlow](projects/printflow.es.md)** — conciliación de datos, kiosco web e impresión de escritorio. Para profundizar en una entrega que conecta web, almacenamiento local y dispositivos físicos.
 
-## 📖 Qué es este repositorio
+## Los ocho casos
 
-Este repositorio **no contiene código fuente**. Es un **archivo de casos de estudio técnicos** del trabajo que realicé como **único desarrollador** de todo el stack de software de una empresa española privada.
+| Caso | Mi contribución | Alcance entregado |
+|---|---|---|
+| [AudioNow](projects/audionow.es.md) | Integración de audio, sesiones, permisos y evolución de proveedores | Uso en sesiones reales documentado; proveedor principal y rama de validación OpenAI diferenciados |
+| [Registro Online v2](projects/online-registration.es.md) | Descubrimiento, modelo de datos, autenticación, pagos e integración legacy | M1–M3 implementados; comprobaciones operativas e hitos posteriores delimitados |
+| [PrintFlow](projects/printflow.es.md) | Generación de credenciales, conciliación, kiosco e integración de impresión | Entrega presencial documentada; operación offline condicionada al material preparado |
+| [Beacon Presence](projects/ble-presence.es.md) | Procesamiento de señal, lógica de presencia y arquitectura IoT | MVP de software; la validación física seguía como siguiente hito |
+| [Realtime Translation](projects/realtime-translation.es.md) | Abstracción de proveedores, orquestación de audio y observabilidad | PoC v1.0 y evolución v1.1; alcance de validación distinto por adaptador |
+| [Schedule Builder](projects/schedule-builder.es.md) | Superficie de integración de lectura, normalización y generación PDF | Flujo PDF verificado en mayo de 2026; comprobaciones adicionales de paridad pendientes |
+| [TaskBoard](projects/taskboard.es.md) | Peticiones, votos, permisos y actualizaciones en tiempo real | Herramienta interna implementada; activación del email pendiente en la última nota de entrega |
+| [Floor Planner](projects/floor-planner.es.md) | Arquitectura inicial, orientación y revisión técnica | Proyecto de mentoría con editor 2D/3D, reservas e importación OCR; implementación del becario |
 
-Los repositorios originales son **privados y propietarios**. Lo que encontrarás aquí es la **documentación de arquitectura, decisiones técnicas, retos resueltos y resultados** de cada sistema — el material que normalmente solo se ve en una entrevista técnica, recopilado de forma que un reclutador o un *lead developer* pueda evaluar el alcance real del trabajo.
+## Cómo leer los casos
 
-> **Por qué este formato.** En proyectos propietarios no se publica el código, pero sí se puede demostrar *cómo se piensa*: el diseño de sistemas, las decisiones justificadas, y el impacto en producción. Es la práctica estándar para mostrar trabajo que no se puede abrir.
+Cada ficha distingue **mi papel**, **el alcance implementado** y **la evidencia de validación o entrega**. Una herramienta desplegada, un MVP de software, un experimento de proveedor y un proyecto de mentoría tienen propósitos y criterios de cierre distintos.
 
----
+Los tres casos destacados ofrecen decisiones complementarias para una entrevista. Para puestos AWS/IoT, [Beacon Presence](projects/ble-presence.es.md) añade profundidad en infraestructura y procesamiento de señal. El [índice completo](projects/README.es.md) ofrece un recorrido breve por los ocho.
 
-## 🗺️ El ecosistema de un vistazo
-
-Todo el ecosistema giraba en torno a **FileMaker** como sistema operativo de verdad del negocio (lo que usaba el equipo interno), con sistemas web modernos construidos alrededor — unos lo **leen**, otros le **escriben de forma aditiva**, y otros operan sobre su propia base de datos sincronizada.
+<details>
+<summary>Mapa de áreas de ingeniería</summary>
 
 ```mermaid
 flowchart TB
-    subgraph CORE["🗄️ Núcleo operativo del negocio"]
-        FM[("FileMaker<br/>Data API<br/>verdad operativa interna")]
-        HEL[("Directorio externo<br/>API REST")]
-    end
-
-    subgraph REG["💳 Registro y credenciales"]
-        IO["Registro Online v2<br/>registro + pagos Redsys"]
-        BF["PrintFlow<br/>tarjetas + kiosco 3D"]
-        PW["Schedule Builder<br/>agenda PDF / Gantt"]
-    end
-
-    subgraph LIVE["🎙️ Capa de tiempo real"]
-        AN["AudioNow<br/>streaming audio multilingüe IA"]
-        CT["Realtime Translation<br/>traducción simultánea PoC"]
-        BA["Beacon Presence<br/>presencia BLE + AWS IoT"]
-    end
-
-    subgraph INTERNAL["🛠️ Herramientas y experiencias"]
-        SC["Floor Planner<br/>plano interactivo 2D/3D"]
-        LT["TaskBoard<br/>gestor de peticiones interno"]
-    end
-
-    IO -- "cola aditiva fm_write_queue" --> FM
-    BF -- "lee inscripciones" --> FM
-    BF -- "lee directorio" --> HEL
-    PW -- "lee sesiones · solo lectura" --> FM
-    SC -.-> SUPA[("Supabase<br/>PostgreSQL + Realtime")]
-    AN -.-> SUPA
-    LT -.-> SUPA
-    IO -.-> SUPA
-    BA -.-> AWS[("AWS<br/>DynamoDB · Lambda · IoT")]
-
-    style FM fill:#1f2937,color:#fff
-    style HEL fill:#1f2937,color:#fff
-    style SUPA fill:#065f46,color:#fff
-    style AWS fill:#7c2d12,color:#fff
+    A["Ocho casos de ingeniería"]
+    A --> R["Registro y operación<br/>Registro Online v2<br/>PrintFlow<br/>Schedule Builder"]
+    A --> T["Sistemas de tiempo real<br/>AudioNow<br/>Realtime Translation<br/>Beacon Presence"]
+    A --> I["Herramientas internas<br/>TaskBoard<br/>Floor Planner · mentoría"]
 ```
 
----
+Este es un mapa de clasificación. Sus flechas agrupan casos; no representan dependencias de ejecución ni una base de producción compartida. Cada ficha incluye su propio diagrama de arquitectura.
 
-## 📂 Los 8 sistemas
+</details>
 
-| Sistema | Qué resuelve | Stack principal | Estado |
-|---|---|---|---|
-| **[Registro Online v2](projects/online-registration.es.md)** | Registro y pago online multi-tenant | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Núcleo en producción |
-| **[PrintFlow](projects/printflow.es.md)** | Generación e impresión de tarjetas identificativas con kiosco 3D | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Producción (despliegue real) |
-| **[AudioNow](projects/audionow.es.md)** | Streaming de audio multilingüe en tiempo real con IA | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Producción (despliegues reales) |
-| **[Beacon Presence](projects/ble-presence.es.md)** | Presencia automática por *beacons* BLE | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 MVP funcional desplegado |
-| **[Realtime Translation](projects/realtime-translation.es.md)** | Traducción de voz simultánea para sesiones en directo | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 entregado |
-| **[Schedule Builder](projects/schedule-builder.es.md)** | Generador de agenda desde FileMaker (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Producción |
-| **[TaskBoard](projects/taskboard.es.md)** | Gestor interno de peticiones priorizadas por votación | Next.js 16 · Supabase Realtime · Resend | 🟢 Producción (interno) |
-| **[Floor Planner](projects/floor-planner.es.md)** | Plano interactivo 2D/3D de asignación de plazas | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Mentoría a becario |
+## Detalle técnico
 
----
+- **[Stack y contribución](STACK.es.md)** — tecnologías enlazadas con el caso y la responsabilidad que las respaldan.
+- **[Pruebas y validación](TESTING.es.md)** — comportamientos probados, resultados históricos fechados y sus límites.
+- **[Metodología](METHODOLOGY.es.md)** — descubrimiento, planificación, implementación asistida por IA y revisión.
 
-## 🧩 Capacidades transversales demostradas
+El énfasis está en las decisiones y la entrega. Los inventarios de implementación pertenecen al contexto de cada caso; archivos, commits y herramientas de prueba configuradas no sustituyen resultados medidos.
 
-Más allá de cada proyecto, el ecosistema completo demuestra dominio de:
+## Sobre mí
 
-- **Integración de sistemas legacy** — FileMaker como fuente de verdad operativa: lectura estricta (Schedule Builder), sincronización **aditiva y nunca destructiva** mediante cola encolada (Registro Online), y conciliación multi-fuente de una API de directorio externa + FileMaker (PrintFlow).
-- **Tiempo real** — WebRTC SFU con LiveKit (AudioNow, Realtime Translation), Supabase Realtime (TaskBoard, Floor Planner), pipelines IoT sub-500 ms (Beacon Presence).
-- **Integraciones de IA en producción** — traducción *speech-to-speech* con Palabra.ai, Azure Live Interpreter y OpenAI Realtime; importación de planos con visión (GPT-4.1 + OpenCV + OCR).
-- **Pagos** — TPV Redsys con firma HMAC-SHA256, webhooks server-to-server e idempotencia de intentos de pago.
-- **PWA y *offline-first*** — Service Workers con Serwist, cache de assets e IndexedDB para operar sin red en el propio emplazamiento.
-- **3D en la web** — React Three Fiber + Rapier (física de cordón y tarjeta en el kiosco), Three.js + drei (editor de salas).
-- **Infraestructura** — Docker multi-stage, AWS CDK (IaC), despliegue en Vercel + Railway, *workers* externos.
-- **Seguridad** — RLS en PostgreSQL, RPC `SECURITY DEFINER`, jerarquías de roles, sesiones `iron-session`, rate limiting.
+**Alejandro González López — desarrollador full-stack.** Mi trabajo combina integración de sistemas, aplicaciones web, medios en tiempo real y experiencias 3D. Estos casos distinguen implementación de mentoría técnica.
 
-Ver el desglose completo en **[STACK.md](STACK.es.md)**.
-
----
-
-## 🤖 Metodología: desarrollo *AI-augmented* con disciplina de ingeniería
-
-Todo este ecosistema lo construyó **una sola persona** en cuestión de meses. Eso fue posible combinando herramientas de IA (Claude Code) con una **metodología de planificación por fases** que deja rastro verificable en cada repositorio:
-
-- **Planificación previa** — cada *milestone* se descompone en fases con documentos `PLAN`, `RESEARCH`, `CONTEXT` y `REQUIREMENTS` antes de escribir código.
-- **Verificación por fase** — cada fase cierra con un documento `VERIFICATION.md` que comprueba que el objetivo se cumplió (no solo que las tareas "se hicieron").
-- **Convenciones explícitas** — ficheros `CLAUDE.md` / `AGENTS.md` codifican las reglas del proyecto (p. ej. "esta versión de Next.js 16 tiene *breaking changes*: consulta los docs antes de tocar").
-- **Trazabilidad de decisiones** — IDs de decisión (`D-XX`), *pitfalls* numerados y referencias a planes embebidos en los comentarios del código.
-
-> El resultado no es *vibe coding*: es velocidad de una persona con el rigor de proceso de un equipo. La IA acelera la ejecución; la arquitectura, las decisiones y la verificación son responsabilidad del desarrollador.
-
-**En números (verificado en los repos):** 37 fases planificadas · 30 documentos de verificación · ~56 specs/planes de diseño · 2 agentes de IA reutilizables propios · **~314 archivos de test**.
-
-📄 Detalle completo en **[METHODOLOGY.md](METHODOLOGY.es.md)** (proceso *AI-augmented*) y **[TESTING.md](TESTING.es.md)** (batería de pruebas por proyecto).
-
----
-
-## 👤 Sobre el autor
-
-**Alejandro González López** — Desarrollador full-stack.
-
-Único responsable del stack de software de la empresa: arquitectura, desarrollo, integraciones, despliegues y operación de los 8 sistemas de este repositorio. También responsable de mentorizar a un becario (ver [Floor Planner](projects/floor-planner.es.md)).
-
-- 🌐 Portfolio: [aglwences.dev](https://aglwences.dev)
-- 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
-- 🐙 GitHub: [@aleglope](https://github.com/aleglope)
-
----
-
-<div align="center">
-
-*Los nombres de clientes, el sector del negocio y los datos sensibles se han omitido deliberadamente. Este repositorio documenta arquitectura y decisiones, no contiene código propietario.*
-
-</div>
+[Portfolio](https://aglwences.dev) · [LinkedIn](https://www.linkedin.com/in/alejandrogonzlopez/) · [GitHub](https://github.com/aleglope)

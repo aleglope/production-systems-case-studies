@@ -1,116 +1,74 @@
-<p align="right"><a href="STACK.md">🇬🇧 English version</a></p>
+<p align="right"><a href="STACK.md">English version</a></p>
 
-# Stack y competencias técnicas
+# Stack y contribución
 
-Competencias demostradas a lo largo del ecosistema, con el **proyecto que las evidencia**. No es una lista de tecnologías "vistas una vez": cada entrada está respaldada por un sistema en producción o un PoC funcional.
+Tecnologías y prácticas enlazadas con el caso y la aportación que las respaldan. El estado de entrega y validación pertenece a cada ficha; las tecnologías del proyecto de mentoría no se atribuyen como implementación individual. Se mantienen las versiones históricas cuando explican una decisión.
 
----
+## Aplicaciones web
 
-## Frontend
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **Next.js App Router** (v14, v15, v16) | Todos los proyectos web. Manejo de *breaking changes* de Next 16 (`proxy.ts` en lugar de `middleware.ts`) documentado en Registro Online y TaskBoard |
-| **React 18 / 19** (Server Components + Server Actions) | Registro Online, PrintFlow, TaskBoard |
-| **3D en web** — React Three Fiber, drei, Rapier (física), Three.js, leva | Kiosco 3D con física de *lanyard* (PrintFlow); editor de salas 3D (Floor Planner); portfolio (three-js-portfolio) |
-| **Canvas 2D** — Konva / react-konva | Plano interactivo de mesas (Floor Planner) |
-| **PWA / offline-first** — Serwist, Service Workers, IndexedDB | PrintFlow (kiosco sin red), Beacon Presence (PWA de usuario) |
-| **UI** — Tailwind CSS 4, shadcn/ui, Radix, Ant Design, Chakra UI | Transversal |
-| **i18n** — next-intl, 6 locales con traducción LLM multi-proveedor | Registro Online |
-| **Estado de servidor** — TanStack Query (mutaciones optimistas) | TaskBoard |
+| **Next.js App Router · React** | [Registro Online](projects/online-registration.es.md) — Flujos individual/grupal, acciones de servidor y recorridos web por tenant |
+| **React Three Fiber · Rapier** | [PrintFlow](projects/printflow.es.md) — Implementación de un kiosco 3D configurable junto al flujo de impresión |
+| **Three.js · vistas 2D** | [Floor Planner](projects/floor-planner.es.md) — Mentoría del proyecto de editor; la implementación corresponde al becario |
+| **Serwist · IndexedDB** | [PrintFlow](projects/printflow.es.md) — Recursos locales preparados y replay de cambios de estado de impresión en cola |
+| **next-intl · pipeline de traducción** | [Registro Online](projects/online-registration.es.md) — Seis catálogos de idioma y fallbacks estructurados; revisión lingüística diferenciada de paridad de claves |
+| **TanStack Query · Supabase Realtime** | [TaskBoard](projects/taskboard.es.md) — Estado cliente y actualizaciones de peticiones/votos en una herramienta interna |
 
----
+## Backend e integración
 
-## Backend
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **NestJS** (v10, v11) — REST, WebSocket, SSE, GraphQL, guards, cron | PrintFlow (41 *endpoints*), AudioNow, Realtime Translation, Beacon Presence |
-| **Next.js Server Actions** como capa de backend | Registro Online (56 *actions*), TaskBoard |
-| **Renderizado servidor** — Puppeteer (Chrome headless), generación PNG/PDF a escala 3× | PrintFlow |
-| **Generación de documentos** — jsPDF, ExcelJS | Registro Online, Schedule Builder |
-| **Procesos largos / workers** — worker externo en Docker, polling de cola | Floor Planner (importador de planos), Registro Online (Vercel Cron) |
+| **NestJS · LiveKit** | [AudioNow](projects/audionow.es.md) — Clientes de traducción en servidor, pistas compartidas y propiedad de sesiones |
+| **Next.js Server Actions · Drizzle** | [Registro Online](projects/online-registration.es.md) — Identidades de compra, acciones de pago y comprobaciones relacionales de propiedad |
+| **Puppeteer · HTML a PNG/PDF** | [PrintFlow](projects/printflow.es.md) — Generación con resolución configurable, concurrencia acotada y recuperación del navegador |
+| **FileMaker Data API** | [Schedule Builder](projects/schedule-builder.es.md) — Wrapper de aplicación de lectura, mapeo de registros y fallback CSV manual |
+| **Handlers de cola controlados** | [Registro Online](projects/online-registration.es.md) — Escrituras legacy diferidas con operaciones permitidas y fronteras de parámetros |
+| **Tesseract.js · Jimp · texto PDF** | [Floor Planner](projects/floor-planner.es.md) — Orientación técnica del flujo de importación localizado; OCR en ruta/proceso Next.js |
 
----
+## Datos y control de acceso
 
-## Datos
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **PostgreSQL** — diseño relacional, *single-table design*, índices parciales, *constraints* | Transversal |
-| **Supabase** — RLS, Realtime, Auth, Storage, RPC `SECURITY DEFINER`, triggers | AudioNow (20 tablas, 77 funciones/triggers), TaskBoard, Floor Planner |
-| **Drizzle ORM** | Registro Online (31 tablas) |
-| **Prisma ORM** (v5, v6) | PrintFlow, AudioNow, Realtime Translation |
-| **DynamoDB** — *single-table* con GSIs, TTL | Beacon Presence |
-| **Redis** — Upstash / ElastiCache: cache, rate limit, pub/sub, *single-flight token cache* | Registro Online, Schedule Builder, Beacon Presence |
-| **Migraciones** — versionadas, con *gates* destructivos por flag | Registro Online (31 migraciones), AudioNow (76) |
+| **PostgreSQL · Drizzle** | [Registro Online](projects/online-registration.es.md) — Modelo relacional, restricciones, índices y migraciones SQL versionadas |
+| **Supabase RLS · RPCs · triggers** | [AudioNow](projects/audionow.es.md) — Permisos de streaming en tres niveles y rutas controladas de cambio de estado |
+| **Prisma · PostgreSQL** | [PrintFlow](projects/printflow.es.md) — Persistencia de credenciales/diseños y conciliación entre fuentes |
+| **DynamoDB · GSIs · TTL** | [Beacon Presence](projects/ble-presence.es.md) — Modelo de estado del pipeline de presencia de software |
+| **Redis · caché de token single-flight** | [Schedule Builder](projects/schedule-builder.es.md) — Token de sesión FileMaker y lock compartidos; diferenciados de la caché de datos del programa |
+| **Supabase Realtime** | [TaskBoard](projects/taskboard.es.md) — Suscripciones sobre peticiones y notificaciones in-app persistidas |
 
----
+## Medios en tiempo real e IA
 
-## Tiempo real y streaming
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **LiveKit** (WebRTC SFU) — `@livekit/rtc-node`, *bot* server-side, DataChannel | AudioNow, Realtime Translation |
-| **Procesamiento de audio** — *resampling* PCM, soft-knee limiter (tanh), chunk smoothing | AudioNow |
-| **Supabase Realtime** — suscripciones a cambios de tabla | TaskBoard, Floor Planner |
-| **Pipelines IoT** — MQTT/TLS → AWS IoT Core → Kinesis → Lambda, latencia <500 ms | Beacon Presence |
+| **WebRTC SFU · bots en servidor** | [AudioNow](projects/audionow.es.md) — Una pista traducida distribuida a oyentes; sesiones organizadas por sala/idioma |
+| **PCM · limitador · resampling** | [AudioNow](projects/audionow.es.md) — Compresión de picos, suavizado de chunks y adaptación de sample rate según rama |
+| **Registry de proveedores de voz** | [Realtime Translation](projects/realtime-translation.es.md) — Siete adaptadores registrados tras un contrato; validación real distinta por adaptador |
+| **Watchdogs · playout adaptativo** | [Realtime Translation](projects/realtime-translation.es.md) — Robustez de sesiones y control de profundidad de cola; observabilidad acotada en la evolución de la PoC |
 
----
+## Algoritmos e infraestructura
 
-## Integraciones de IA
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **Traducción *speech-to-speech*** — Palabra.ai, Azure Live Interpreter v2, OpenAI Realtime API, Google Gemini Live, Grok | AudioNow (producción), Realtime Translation (7 proveedores conmutables) |
-| **Visión + OCR** — GPT-4.1 para importación de planos, con OpenCV / Tesseract / PaddleOCR de respaldo | Floor Planner |
-| **Traducción de texto LLM** — cadena multi-proveedor con *fallback* (OpenAI → Google → Anthropic) | Registro Online (i18n) |
-| **Patrones de robustez LLM** — *watchdog timeouts*, anti-alucinación, renovación proactiva de sesión, *voice cloning* zero-shot | Realtime Translation |
+| **Filtro Kalman · histéresis** | [Beacon Presence](projects/ble-presence.es.md) — Filtrado RSSI y transiciones de presencia; calibración física como hito separado |
+| **AWS IoT · Lambda · SQS** | [Beacon Presence](projects/ble-presence.es.md) — Cuatro etapas con fronteras de cola; Kinesis/S3 como ramas paralelas de ingestión |
+| **AWS CDK** | [Beacon Presence](projects/ble-presence.es.md) — Infraestructura como código del MVP; no implica infraestructura cloud activa actualmente |
+| **Docker · Chromium · Railway** | [PrintFlow](projects/printflow.es.md) — Despliegue backend con renderizado headless y memoria limitada |
+| **Vercel · Railway · Supabase** | [AudioNow](projects/audionow.es.md) — Servicios separados de web, API y datos; una réplica de API en la versión descrita |
+| **Electron · empaquetado Windows** | [PrintFlow](projects/printflow.es.md) — Puente de escritorio, solicitudes de impresión silenciosa y distribución portable/NSIS |
 
----
+## Pagos, privacidad y colaboración
 
-## Algoritmos y sistemas
-
-| Competencia | Evidencia |
+| Tecnología o práctica | Caso y contribución |
 |---|---|
-| **Filtrado de señal** — filtro de Kalman para suavizar RSSI (-27 % ruido) | Beacon Presence |
-| **Máquinas de estados** — detección de presencia con histéresis (4 estados, umbrales -70/-80 dBm) | Beacon Presence |
-| **Idempotencia** — reintentos de pago con `id_intento`, *find-or-create* en cola FileMaker | Registro Online |
-| **Concurrencia** — *singleton* de navegador con recuperación, mutex anti-zombie en sesiones de traducción | PrintFlow, AudioNow |
+| **Redsys · identidad de intento** | [Registro Online](projects/online-registration.es.md) — Firma de pasarela, webhook, propiedad del reintento y reutilización del intento de pago |
+| **OTP · iron-session · bcrypt** | [Registro Online](projects/online-registration.es.md) — Identidades distintas para asistentes individuales y compradores grupales autenticados |
+| **Fronteras de datos · auditoría** | [Registro Online](projects/online-registration.es.md) — Restricciones por rol/tenant y requisitos de privacidad explícitos; no certificación de cumplimiento legal |
+| **Notificaciones · Resend** | [TaskBoard](projects/taskboard.es.md) — Persistencia in-app seguida de intento de email con errores aislados; alcance de activación fechado en la ficha |
+| **Mentoría · revisión técnica** | [Floor Planner](projects/floor-planner.es.md) — Arquitectura inicial, orientación y revisión; código implementado por el becario |
 
----
+## Práctica de ingeniería
 
-## Infraestructura y DevOps
+Las fichas conectan estas herramientas con restricciones y alternativas. La [metodología](METHODOLOGY.es.md) explica descubrimiento, planificación, revisión y asistencia de IA; [pruebas y validación](TESTING.es.md) separa inventario, ejecuciones históricas y comprobaciones operativas.
 
-| Competencia | Evidencia |
-|---|---|
-| **Vercel** — despliegue de Next.js, Cron, *environment variables* | 8 proyectos desplegados |
-| **Railway** — backend NestJS en Docker, PostgreSQL gestionado | PrintFlow, AudioNow |
-| **AWS CDK** (IaC) — VPC, DynamoDB, ElastiCache, SQS, Lambda, ECS Fargate, Cognito, WAF | Beacon Presence |
-| **Docker** — *builds* multi-stage con Chromium, workers como contenedor | PrintFlow, Floor Planner |
-| **CI/CD** — GitHub Actions (lint, typecheck, test, E2E Playwright, carga Artillery, CDK synth) | Beacon Presence, varios |
-| **App de escritorio** — instalador Windows con GitHub Actions (impresión silenciosa) | PrintFlow |
-
----
-
-## Pagos, seguridad y cumplimiento
-
-| Competencia | Evidencia |
-|---|---|
-| **TPV Redsys** — firma HMAC-SHA256, webhook server-to-server, idempotencia | Registro Online |
-| **Autenticación** — `iron-session`, OTP passwordless (Twilio Verify / Resend), bcrypt + pepper, sesión dual | Registro Online |
-| **Autorización** — RLS, RPC `SECURITY DEFINER` + trigger `BEFORE UPDATE`, jerarquía de roles 3-tier | AudioNow, TaskBoard |
-| **Rate limiting / anti-abuso** — Upstash, *circuit breaker*, validación de *magic bytes* en uploads | Registro Online, PrintFlow, Beacon Presence |
-| **Privacidad** — reglas anti-suplantación, fences de datos (no exponer NIF), `audit_log` | Registro Online |
-
----
-
-## Metodología
-
-| Competencia | Evidencia |
-|---|---|
-| **Desarrollo *AI-augmented*** — Claude Code con planificación por fases (GSD) | Transversal (`.planning/` en todos los repos) |
-| **Verificación goal-backward** — `VERIFICATION.md` por fase | Registro Online, PrintFlow, AudioNow, Realtime Translation |
-| **TDD / tests** — Vitest, Jest, Testing Library; 881 tests (Inscripción), 366+ archivos (Beacon) | Registro Online, Beacon Presence |
-| **Documentación técnica** — specs, ADRs informales, diagramas Mermaid | Transversal |
-| **Mentoría** — formación de un becario en IA y librerías 3D | Floor Planner |
+[Volver al resumen](README.es.md)

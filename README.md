@@ -1,143 +1,63 @@
-<p align="right"><a href="README.es.md">🇪🇸 Versión en español</a></p>
-
-<div align="center">
+<p align="right"><a href="README.es.md">Versión en español</a></p>
 
 # Production Systems Case Studies
 
-### Eight production systems: registration and payments, real-time AI audio, IoT presence and on-demand printing
+**Eight professional engineering case studies: registration and payments, multilingual audio, on-demand printing, IoT presence and internal tools.**
 
-**8 production systems, designed and built solo in five months** (January–May 2026), with an AI-augmented development workflow (Claude Code + phase-based planning methodology).
+This archive presents my work in architecture, implementation, integration and technical mentorship. Each case explains the problem, my contribution, the decisions behind the solution and the scope delivered.
 
-![Next.js](https://img.shields.io/badge/Next.js-14_·_15_·_16-000000?logo=nextdotjs&logoColor=white)
-![NestJS](https://img.shields.io/badge/NestJS-10_·_11-ea2845?logo=nestjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase_·_Prisma_·_Drizzle-4169E1?logo=postgresql&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-CDK_·_IoT_·_Lambda-232F3E?logo=amazonaws&logoColor=white)
-![FileMaker](https://img.shields.io/badge/FileMaker-Data_API-555?logo=claris&logoColor=white)
+The original repositories are private. This archive contains technical documentation, without source code or client data. Cases describe historical implementation and delivery records from 2026; they do not imply that I currently operate the services.
 
-</div>
+## Start here
 
----
+- **[AudioNow](projects/audionow.md)** — WebRTC audio, translation-provider integration and session lifecycle. Read it for real-time systems and AI integration.
+- **[Online Registration v2](projects/online-registration.md)** — two purchasing flows, payment retries and coexistence with a legacy system. Read it for full-stack product and data integration.
+- **[PrintFlow](projects/printflow.md)** — data reconciliation, a web kiosk and desktop printing. Read it for delivery across web, local storage and physical devices.
 
-## 📖 What this repository is
+## The eight cases
 
-This repository **contains no source code**. It is an **archive of technical case studies** covering the work I did as the **sole developer** of the entire software stack of a private Spanish company.
+| Case | My contribution | Delivery scope |
+|---|---|---|
+| [AudioNow](projects/audionow.md) | Audio integration, sessions, permissions and provider evolution | Live-session use documented; main provider and OpenAI validation branch distinguished |
+| [Online Registration v2](projects/online-registration.md) | Discovery, data model, authentication, payments and legacy integration | M1–M3 implemented; operational checks and later milestones identified separately |
+| [PrintFlow](projects/printflow.md) | Credential generation, reconciliation, kiosk and print integration | In-person delivery documented; offline operation requires prepared material |
+| [Beacon Presence](projects/ble-presence.md) | Signal processing, presence logic and IoT architecture | Software MVP; physical validation remained the next milestone |
+| [Realtime Translation](projects/realtime-translation.md) | Provider abstraction, audio orchestration and observability | PoC v1.0 and v1.1 evolution; validation scope differs by adapter |
+| [Schedule Builder](projects/schedule-builder.md) | Read-only integration surface, normalization and PDF generation | PDF workflow verified in May 2026; additional data-parity checks remained |
+| [TaskBoard](projects/taskboard.md) | Requests, voting, permissions and real-time updates | Internal tool implemented; email activation was pending in the last delivery note |
+| [Floor Planner](projects/floor-planner.md) | Initial architecture, guidance and technical review | Mentorship project with a 2D/3D editor, reservations and OCR import; implementation by the intern |
 
-The original repositories are **private and proprietary**. What you will find here is the **architecture documentation, technical decisions, solved challenges and outcomes** of each system — the material that usually only surfaces in a technical interview, compiled so that a recruiter or lead developer can assess the real scope of the work.
+## How to read the cases
 
-> **Why this format.** With proprietary projects you can't publish the code, but you *can* demonstrate how you think: system design, justified decisions, and production impact. This is the standard practice for showcasing work that can't be open-sourced.
+Each case separates **my role**, **the implemented scope** and **the validation or delivery evidence**. A deployed tool, a software MVP, a provider experiment and a mentorship project have different purposes and completion criteria.
 
----
+The three featured cases offer complementary decisions to discuss in an interview. For AWS/IoT roles, [Beacon Presence](projects/ble-presence.md) adds infrastructure and signal-processing depth. The [full index](projects/README.md) provides a short route through all eight.
 
-## 🗺️ The ecosystem at a glance
-
-The entire ecosystem revolved around **FileMaker** as the business's operational source of truth (what the internal team used daily), with modern web systems built around it — some **read** from it, some **write to it additively**, and others run on their own synchronized database.
+<details>
+<summary>Map of engineering areas</summary>
 
 ```mermaid
 flowchart TB
-    subgraph CORE["🗄️ Business operational core"]
-        FM[("FileMaker<br/>Data API<br/>internal source of truth")]
-        HEL[("External directory<br/>REST API")]
-    end
-
-    subgraph REG["💳 Registration & credentials"]
-        IO["Online Registration v2<br/>sign-up + Redsys payments"]
-        BF["PrintFlow<br/>ID cards + 3D kiosk"]
-        PW["Schedule Builder<br/>PDF schedule / Gantt"]
-    end
-
-    subgraph LIVE["🎙️ Real-time layer"]
-        AN["AudioNow<br/>AI multilingual audio streaming"]
-        CT["Realtime Translation<br/>simultaneous translation PoC"]
-        BA["Beacon Presence<br/>BLE presence + AWS IoT"]
-    end
-
-    subgraph INTERNAL["🛠️ Tools & experiences"]
-        SC["Floor Planner<br/>interactive 2D/3D floor plan"]
-        LT["TaskBoard<br/>internal request manager"]
-    end
-
-    IO -- "additive queue fm_write_queue" --> FM
-    BF -- "reads registrations" --> FM
-    BF -- "reads directory" --> HEL
-    PW -- "reads sessions · read-only" --> FM
-    SC -.-> SUPA[("Supabase<br/>PostgreSQL + Realtime")]
-    AN -.-> SUPA
-    LT -.-> SUPA
-    IO -.-> SUPA
-    BA -.-> AWS[("AWS<br/>DynamoDB · Lambda · IoT")]
-
-    style FM fill:#1f2937,color:#fff
-    style HEL fill:#1f2937,color:#fff
-    style SUPA fill:#065f46,color:#fff
-    style AWS fill:#7c2d12,color:#fff
+    A["Eight engineering cases"]
+    A --> R["Registration and operation<br/>Online Registration v2<br/>PrintFlow<br/>Schedule Builder"]
+    A --> T["Real-time systems<br/>AudioNow<br/>Realtime Translation<br/>Beacon Presence"]
+    A --> I["Internal tools<br/>TaskBoard<br/>Floor Planner · mentorship"]
 ```
 
----
+This is a classification map. Its arrows group cases; they do not describe runtime dependencies or a shared production database. Each case has its own architecture diagram.
 
-## 📂 The 8 systems
+</details>
 
-| System | What it solves | Core stack | Status |
-|---|---|---|---|
-| **[Online Registration v2](projects/online-registration.md)** | Multi-tenant online registration and payments | Next.js 16 · Supabase · Drizzle · Redsys · FileMaker · OTP | 🟢 Core in production |
-| **[PrintFlow](projects/printflow.md)** | ID card generation and printing with a 3D self-service kiosk | NestJS · Next.js 16 · Puppeteer · R3F · PWA · FileMaker | 🟢 Production (live deployment) |
-| **[AudioNow](projects/audionow.md)** | Real-time multilingual audio streaming with AI translation | Next.js · NestJS · LiveKit · Palabra.ai · Supabase | 🟢 Production (live deployments) |
-| **[Beacon Presence](projects/ble-presence.md)** | Automatic presence tracking via BLE beacons | AWS CDK · IoT Core · Lambda · DynamoDB · Kinesis | 🟢 Working MVP deployed |
-| **[Realtime Translation](projects/realtime-translation.md)** | Simultaneous voice translation for live sessions | LiveKit · Azure Speech · OpenAI Realtime · NestJS | 🟢 PoC v1.0 delivered |
-| **[Schedule Builder](projects/schedule-builder.md)** | Schedule generator from FileMaker (Gantt → PDF) | Next.js 15 · FileMaker Data API · Upstash Redis | 🟢 Production |
-| **[TaskBoard](projects/taskboard.md)** | Internal request manager prioritized by team voting | Next.js 16 · Supabase Realtime · Resend | 🟢 Production (internal) |
-| **[Floor Planner](projects/floor-planner.md)** | Interactive 2D/3D seating floor plan | Next.js · Three.js · Konva · Supabase · GPT-4.1 | 🟡 Intern mentorship |
+## Technical detail
 
----
+- **[Stack and contribution](STACK.md)** — technologies linked to the case and responsibility that support them.
+- **[Testing and validation](TESTING.md)** — behaviors tested, dated historical results and their limits.
+- **[Methodology](METHODOLOGY.md)** — discovery, planning, AI-assisted implementation and review.
 
-## 🧩 Cross-cutting capabilities demonstrated
+The emphasis is on decisions and delivery. Implementation inventories belong in the case context; file counts, commits and configured test tools are not substitutes for measured results.
 
-Beyond each individual project, the ecosystem as a whole demonstrates command of:
+## About me
 
-- **Legacy system integration** — FileMaker as the operational source of truth: strict read-only access (Schedule Builder), **additive, never-destructive** synchronization through a write queue (Online Registration), and multi-source reconciliation of an external directory API + FileMaker (PrintFlow).
-- **Real-time** — WebRTC SFU with LiveKit (AudioNow, Realtime Translation), Supabase Realtime (TaskBoard, Floor Planner), sub-500 ms IoT pipelines (Beacon Presence).
-- **AI integrations in production** — speech-to-speech translation with Palabra.ai, Azure Live Interpreter and OpenAI Realtime; floor-plan import with vision (GPT-4.1 + OpenCV + OCR).
-- **Payments** — Redsys payment gateway with HMAC-SHA256 signing, server-to-server webhooks and payment-attempt idempotency.
-- **PWA & offline-first** — Service Workers with Serwist, asset caching and IndexedDB to keep operating with no network on site.
-- **3D on the web** — React Three Fiber + Rapier (card-lanyard physics in the kiosk), Three.js + drei (room editor).
-- **Infrastructure** — multi-stage Docker, AWS CDK (IaC), Vercel + Railway deployments, external workers.
-- **Security** — PostgreSQL RLS, `SECURITY DEFINER` RPCs, role hierarchies, `iron-session` sessions, rate limiting.
+**Alejandro González López — full-stack developer.** My work combines system integration, web applications, real-time media and 3D experiences. These case studies distinguish implementation work from technical mentorship.
 
-See the full breakdown in **[STACK.md](STACK.md)**.
-
----
-
-## 🤖 Methodology: AI-augmented development with engineering discipline
-
-This entire ecosystem was built by **one person** in a matter of months. That was possible by combining AI tooling (Claude Code) with a **phase-based planning methodology** that leaves a verifiable trail in every repository:
-
-- **Plan before code** — every milestone is broken into phases with `PLAN`, `RESEARCH`, `CONTEXT` and `REQUIREMENTS` documents before writing code.
-- **Per-phase verification** — every phase closes with a `VERIFICATION.md` that checks the goal was achieved (not just that tasks "got done").
-- **Explicit conventions** — `CLAUDE.md` / `AGENTS.md` files codify each project's rules (e.g. "this Next.js 16 version has breaking changes: read the docs before touching anything").
-- **Decision traceability** — decision IDs (`D-XX`), numbered pitfalls and plan references embedded in code comments.
-
-> The result is not vibe coding: it's one person's speed with a team's process rigor. AI accelerates execution; architecture, decisions and verification remain the developer's responsibility.
-
-**By the numbers (verified in the repos):** 37 planned phases · 30 verification documents · ~56 design specs/plans · 2 custom reusable AI agents · **~314 test files**.
-
-📄 Full detail in **[METHODOLOGY.md](METHODOLOGY.md)** (AI-augmented process) and **[TESTING.md](TESTING.md)** (per-project test suites).
-
----
-
-## 👤 About the author
-
-**Alejandro González López** — Full-stack developer.
-
-Solely responsible for the company's software stack: architecture, development, integrations, deployments and operation of the 8 systems in this repository. Also responsible for mentoring an intern (see [Floor Planner](projects/floor-planner.md)).
-
-- 🌐 Portfolio: [aglwences.dev](https://aglwences.dev)
-- 💼 LinkedIn: [alejandrogonzlopez](https://www.linkedin.com/in/alejandrogonzlopez/)
-- 🐙 GitHub: [@aleglope](https://github.com/aleglope)
-
----
-
-<div align="center">
-
-*Client names, business domain and sensitive data have been deliberately omitted. This repository documents architecture and decisions — it contains no proprietary code.*
-
-</div>
+[Portfolio](https://aglwences.dev) · [LinkedIn](https://www.linkedin.com/in/alejandrogonzlopez/) · [GitHub](https://github.com/aleglope)

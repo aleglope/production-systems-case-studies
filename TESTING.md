@@ -1,51 +1,46 @@
-<p align="right"><a href="TESTING.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="TESTING.es.md">Versión en español</a></p>
 
-# Testing & quality
+# Testing and validation
 
-The testing approach across the ecosystem, with **real data** (test-file counts per project, dependencies excluded). This is not a generic "it has tests" claim: it's the verified inventory.
+This appendix separates **test assets**, **dated execution records** and **operational validation**. A test-file count describes suite size, not coverage or a passing run. The records below concern historical versions; the applications were not re-run to prepare this documentation update.
 
-## Summary
+## Behaviors and boundaries
 
-**~314 test files**, distributed as follows:
+| Case | What the tests or checks address | Boundary of that evidence |
+|---|---|---|
+| [Online Registration](projects/online-registration.md) | Identity and tenant boundaries, payment attempts, retry actions, OTP and queue-handler contracts | Mocked services do not validate the payment gateway, SMS or FileMaker activation in production |
+| [AudioNow](projects/audionow.md) | Audio processing, resampling, provider clients and session lifecycle | Main and OpenAI validation branches differ; unit tests do not establish perceptual quality or canary traffic |
+| [PrintFlow](projects/printflow.md) | Delivery checks for generation, reconciliation, kiosk and printing; test infrastructure configured | Automated coverage remained a development item; the offline-video extension had a separate human checkpoint |
+| [Beacon Presence](projects/ble-presence.md) | Filter/state transitions, aggregation, a local harness and configured E2E/load scenarios | Scenario configuration is not an executed load result or a hardware-accuracy measurement |
+| [Realtime Translation](projects/realtime-translation.md) | Provider registry, session orchestration, API boundaries and voice-profile behavior with mocks | Real-provider/perceptual checks and restricted-access features have separate gates |
+| [Schedule Builder](projects/schedule-builder.md) | Mapping, dates/text normalization, mocked legacy integration and PDF checks | A verified PDF flow does not establish parity for every source field and layout variant |
+| [TaskBoard](projects/taskboard.md) | Components, business rules and email behavior with mocks | Mock email checks do not prove delivery to real recipients or activation of the production migration |
+| [Floor Planner](projects/floor-planner.md) | This case documents mentorship and the implemented editor/import workflow | It does not claim an independently validated automated test suite for the intern's implementation |
 
-| Project | Test files | Framework(s) | Test types |
-|---|---:|---|---|
-| **[Online Registration](projects/online-registration.md)** | **127** | Vitest · Testing Library | Data invariants, Server Actions for both flows, FileMaker queue, OTP, security regressions (CSRF/XSS) |
-| **[Realtime Translation](projects/realtime-translation.md)** | **86** | Jest · Supertest | API unit + integration, translation providers |
-| **[AudioNow](projects/audionow.md)** | **38** | Vitest · Testing Library | Audio pipeline, soft-limiter, translation sessions |
-| **[Beacon Presence](projects/ble-presence.md)** | **32** | Jest · Playwright · Artillery | Unit + **E2E** + **load** (up to 200 rps) |
-| **[TaskBoard](projects/taskboard.md)** | **24** | Vitest · Testing Library | Components, voting, notifications |
-| **[Schedule Builder](projects/schedule-builder.md)** | **7** (57 cases) | Vitest · Testing Library | Logic + FileMaker mocks |
-| **[PrintFlow](projects/printflow.md)** | infra configured | Jest · Supertest | Infrastructure ready; automated coverage logged as post-rollout debt |
-| **[Floor Planner](projects/floor-planner.md)** | — | — | Mentorship/learning project |
+## Selected historical execution records
 
-> **Honesty:** PrintFlow shipped to production against a fixed, immovable go-live date; it has the test infrastructure (Jest + Supertest) configured but prioritized delivery, leaving automated coverage as conscious debt. Floor Planner was an intern's learning vehicle. The rest of the ecosystem carries substantial coverage.
+These are summaries of internal project records, not newly executed results or a public reproduction package. Dates identify the reported check, not a guarantee that the current service has the same state.
 
-## Per-project detail
+| Case and record | Date | Reported result | Scope and remaining checks |
+|---|---|---|---|
+| Online Registration, M3 phase verification | 29 May 2026 | 881 passed, 2 skipped, 1 failed | Phase criteria and fixes documented; typing/test debt and live integration checks were recorded separately |
+| Schedule Builder, remediation verification | 26 May 2026 | 58 tests passed; typecheck reported | End-to-end PDF evidence also recorded; some source-field parity checks remained |
+| Realtime Translation, voice-profile verification | 28 April 2026 | 296 tests passed in the recorded run | Profiles/API tested with mocks; restricted-access and perceptual checks remained separate |
 
-### Online Registration — 127 files · 881 tests
-The suite covers the **invariants that matter** in a payment system:
-- `Persona` uniqueness per association, `Pago` idempotency (the same `id_intento` never duplicates a row), `Inscripción` state machine.
-- **Anti-impersonation**: no personal data is ever exposed without a successful OTP.
-- Server Actions for both the individual and group flows, `fm_write_queue` handlers, OTP messaging.
-- Security regressions (CSRF/XSS).
+Later summaries may mention different totals. They are not combined across branches, milestones or dates. For example, a summary's claimed run is not treated as an execution by a verifier that explicitly did not run the suite.
 
-### Beacon Presence — 32 files · unit + E2E + load
-The project with the most complete test pyramid:
-- **Unit** (Jest): exhaustive suites — e.g. 47 cases on the zone detector (state transitions, hysteresis), 47 on the presence aggregator (points, bonuses), 18 on the Kalman filter.
-- **E2E** (Playwright).
-- **Load** (Artillery): scenarios up to 200 rps with warm-up → ramp-up → sustained → peak phases.
-- All orchestrated in **CI/CD** (GitHub Actions: lint, typecheck, unit, E2E, load, `cdk synth`).
+## Scenarios worth discussing in an interview
 
-### Realtime Translation — 86 files
-Unit + integration tests for the NestJS API (Supertest), covering the provider registry and translation-session orchestration.
+- **Payment retries:** reuse the payment-attempt identity, validate ownership and distinguish retries from a new gateway order. Database constraints, mocked action tests and a live gateway check provide different kinds of assurance.
+- **Audio sessions:** concurrent language changes, shutdown and reconnection can leave external clients alive. Lifecycle tests address ownership and cleanup; provider access and listening checks address real output.
+- **Presence:** noisy RSSI, short doorway crossings and grace periods exercise a state machine. Physical range, precision and end-to-end latency need a measured hardware experiment.
+- **Printing:** prepared local assets and queued state changes address network loss. A successful print call is not a physical receipt from the printer.
+- **Legacy export:** valid and invalid source records, manual CSV fallback and a real PDF inspection test different boundaries.
 
-### AudioNow — 38 files
-Focused on the audio pipeline: soft-knee limiter, resampling, translation-session lifecycle and the LiveKit bridge. Includes the `openai-realtime` module's `*.spec.ts` (on the canary branch).
+## Inventory conventions
 
-### TaskBoard — 24 · Schedule Builder — 7 (57 cases)
-Component and business-logic coverage; in Schedule Builder, with FileMaker Data API mocks to test the integration without touching the real system.
+Where a case includes an implementation count, it belongs to the stated version and perimeter. Test files, individual cases, configured tools and executed checks are different units. Generated files, dependencies and copies of the same code across branches must not inflate a combined total.
 
-## Frameworks & tools
+Inventories are scoped to one version and counting method instead of combining incompatible branches. The emphasis is the invariant, the recorded result and its boundary.
 
-`Vitest` · `Jest` · `ts-jest` · `Supertest` · `Playwright (E2E)` · `Artillery (load)` · `@testing-library/react` · `@testing-library/user-event` · `jsdom` · `GitHub Actions (CI/CD)`
+[Methodology](METHODOLOGY.md) · [Stack and contribution](STACK.md) · [Overview](README.md)

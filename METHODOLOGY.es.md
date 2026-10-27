@@ -1,73 +1,56 @@
-<p align="right"><a href="METHODOLOGY.md">🇬🇧 English version</a></p>
+<p align="right"><a href="METHODOLOGY.md">English version</a></p>
 
-# Metodología: desarrollo *AI-augmented* con disciplina de ingeniería
+# Metodología de ingeniería
 
-Construir **8 sistemas en producción en cuestión de meses, en solitario**, no fue *vibe coding*. Fue una metodología deliberada que combina herramientas de IA (Claude Code) con un proceso de planificación y verificación por fases que deja **rastro auditable en cada repositorio**.
+Utilicé desarrollo asistido por IA junto con descubrimiento, notas de diseño, implementación acotada y revisión. Los proyectos combinaron planes por fases, especificaciones y registros de verificación de formas distintas; no todos siguieron un proceso uniforme.
 
-Este documento recoge la **evidencia real** de ese proceso — lo que un reclutador o *lead* puede comprobar.
+Esta página explica las prácticas de trabajo que hay detrás de los casos. Los artefactos de planificación originales siguen siendo privados, por lo que el archivo público resume decisiones concretas en lugar de ofrecer una auditoría reproducible de cada registro interno.
 
----
+## Empezar por el problema operativo
 
-## 1. Planificación por fases antes del código (GSD)
+En [Registro Online](projects/online-registration.es.md) estudié el flujo existente antes de cambiar la plataforma web: sesiones de trabajo con el equipo interno, comportamiento legacy, propiedad de los datos y diferencia entre compradores individuales y grupales. Esas observaciones se convirtieron en requisitos y límites de entrega.
 
-Cada *milestone* se descompone en fases, y cada fase produce documentos `PLAN`, `RESEARCH`, `CONTEXT` y `REQUIREMENTS` **antes** de escribir código. Cada fase cierra con un `VERIFICATION.md` que comprueba —*goal-backward*— que el objetivo se cumplió, no solo que las tareas "se hicieron".
+La restricción era la convivencia: los flujos web nuevos debían evolucionar mientras el sistema operativo heredado seguía en uso. De ahí surgieron identidades separadas, rutas de escritura controladas y una salida por etapas en lugar de una sustitución de golpe.
 
-**Evidencia agregada:** **37 fases** planificadas y **30 documentos de verificación** a lo largo del ecosistema.
+## Dividir la implementación en entregas acotadas
 
----
+Utilicé planes de fase y notas de diseño para identificar dependencias, alternativas y criterios de aceptación. Los registros de verificación distinguían comprobaciones de código, pruebas automatizadas y checkpoints humanos u operativos.
 
-## 2. Agentes reutilizables propios
+Ejemplos de esa distinción:
 
-Más allá de *usar* IA, construí **agentes especializados para mi dominio**, versionados en el repo (`.claude/agents/`):
+| Caso | Decisión de planificación o verificación |
+|---|---|
+| [Registro Online](projects/online-registration.es.md) | Separar M1–M3 de los hitos posteriores y de las comprobaciones de activación de proveedores |
+| [PrintFlow](projects/printflow.es.md) | Registrar feedback de campo tras la primera entrega y validar por separado extensiones como el vídeo offline |
+| [Beacon Presence](projects/ble-presence.es.md) | Pasar de un MVP de software a un harness local antes de afirmar precisión con hardware real |
+| [Realtime Translation](projects/realtime-translation.es.md) | Distinguir adaptador registrado, comprobaciones automáticas y prueba real con acceso al proveedor |
+| [Schedule Builder](projects/schedule-builder.es.md) | Combinar pruebas de integración con mocks y una comprobación PDF de extremo a extremo documentada |
 
-| Agente | Proyecto | Qué automatiza |
-|---|---|---|
-| **`livekit-translation-reviewer`** | AudioNow | Audita el *bridge* LiveKit ↔ Palabra/OpenAI buscando fugas de sesión, *race conditions* y regresiones de audio |
-| **`prisma-supabase-migration-checker`** | AudioNow | Revisa migraciones Prisma/Supabase contra el esquema y las políticas RLS antes de aplicarlas |
+Un plan cerrado no prueba por sí solo un despliegue. Una corrección posterior también puede superar un gap inicial: la ficha debe reflejar la implementación fechada y su verificación, no un porcentaje de progreso aislado.
 
-Es la diferencia entre *consumir* una herramienta y *construir* tu propio tooling sobre ella.
+## Utilizar IA para trabajo de ingeniería acotado
 
----
+Usé asistentes de programación, skills reutilizables y tareas paralelas para investigación, implementación y revisión. Las instrucciones de proyecto recogían convenciones y restricciones para que una sesión nueva pudiera trabajar con el mismo contexto.
 
-## 3. Desarrollo dirigido por subagentes y *skills*
+Dos agentes de revisión especializados del trabajo de AudioNow abordaban:
 
-El trabajo se apoyó en **subagentes** (descomposición de tareas en paralelo) y en *skills* reutilizables. Varias specs lo declaran explícitamente (p. ej. *"brainstormed with Claude"*, *"REQUIRED SUB-SKILL: subagent-driven-development"*).
+- **Revisión de sesiones de traducción:** fugas de sesiones, operaciones concurrentes de arranque/parada y regresiones de audio en el puente LiveKit/proveedor.
+- **Revisión de migraciones:** coherencia entre cambios Prisma/Supabase, esquema y políticas de acceso.
 
-**Evidencia:** **~56 documentos** de specs y planes de diseño (AudioNow concentra ~49), cada uno con su *decision log* y *checklists* de ejecución.
+Estas herramientas apoyaban la revisión; no garantizaban corrección ni sustituían las comprobaciones de aceptación. La arquitectura, las decisiones de alcance y la verificación seguían bajo mi responsabilidad.
 
----
+## Conectar las decisiones con sus consecuencias
 
-## 4. Convenciones codificadas para la IA
+El registro útil es el motivo de una elección y el comportamiento que permite:
 
-Ficheros `CLAUDE.md` / `AGENTS.md` codifican las reglas del proyecto para que cualquier sesión de IA las respete — por ejemplo, *"esta versión de Next.js 16 tiene breaking changes: consulta los docs antes de tocar código"*, o la política de **FileMaker de solo lectura**.
+- [AudioNow](projects/audionow.es.md): una réplica de API simplifica la propiedad de las sesiones, dejando el escalado horizontal fuera del alcance de esa versión.
+- [PrintFlow](projects/printflow.es.md): un host de escritorio aporta impresión silenciosa, a cambio de empaquetado y configuración de dispositivos.
+- [Registro Online](projects/online-registration.es.md): los handlers restringidos de la cola limitan la superficie de escritura legacy, mientras la activación sigue requiriendo comprobaciones operativas.
 
-**Evidencia:** `CLAUDE.md` en **6 de 8** proyectos · `AGENTS.md` en **3 de 8**.
+Los casos conservan esos compromisos. Se omiten totales agregados de planes, fases o instrucciones de agentes porque cada proyecto utilizó unidades y versiones distintas.
 
----
+## Transferir el enfoque mediante mentoría
 
-## 5. Trazabilidad de decisiones
+En [Floor Planner](projects/floor-planner.es.md) mi aportación fue orientación, arquitectura inicial y revisión técnica. El becario implementó la aplicación. La ficha explica ese papel por separado de la autoría de la implementación.
 
-Las decisiones quedan referenciadas en el propio código: IDs de decisión (`D-XX`), *pitfalls* numerados y referencias a planes (`Phase 33 Plan 33-08`) embebidos en comentarios. Cualquiera puede reconstruir *por qué* algo se hizo de una forma.
-
----
-
-## Evidencia por proyecto
-
-| Proyecto | Fases GSD | Verif. docs | Specs+Plans | Agentes propios | `CLAUDE`/`AGENTS` |
-|---|---:|---:|---:|---:|:--|
-| Registro Online | 16 | 11 | 1 | — | ✓ / ✓ |
-| Realtime Translation | 10 | 10 | — | — | ✓ / — |
-| PrintFlow | 5 | 5 | 2 | — | ✓ / — |
-| Schedule Builder | 4 | 4 | 2 | — | ✓ / — |
-| AudioNow | — | — | **49** | **2** | — / — |
-| Beacon Presence | 1 | — | — | — | ✓ / — |
-| TaskBoard | 1 | — | 2 | — | ✓ / ✓ |
-| Floor Planner | — | — | — | — | ✓ / ✓ |
-
----
-
-## El resultado
-
-**Velocidad de una persona, rigor de proceso de un equipo.** La IA acelera la ejecución; la arquitectura, las decisiones y la verificación siguen siendo responsabilidad del desarrollador. Esa misma disciplina se transfirió a un **becario** al que formé en el uso de IA y librerías 3D (ver [Floor Planner](projects/floor-planner.es.md)).
-
-> Para la batería de pruebas de cada sistema, ver **[TESTING.md](TESTING.es.md)**.
+[Pruebas y validación](TESTING.es.md) · [Stack y contribución](STACK.es.md) · [Resumen](README.es.md)

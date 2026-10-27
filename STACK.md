@@ -1,116 +1,74 @@
-<p align="right"><a href="STACK.es.md">🇪🇸 Versión en español</a></p>
+<p align="right"><a href="STACK.es.md">Versión en español</a></p>
 
-# Stack & technical skills
+# Stack and contribution
 
-Skills demonstrated across the ecosystem, each with the **project that evidences it**. This is not a list of technologies "touched once": every entry is backed by a production system or a working PoC.
+Technologies and practices linked to the case and contribution that support them. Delivery and validation scope belongs to each case; the mentorship project is not attributed as individual implementation. Historical versions are retained where they explain a decision.
 
----
+## Web applications
 
-## Frontend
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **Next.js App Router** (v14, v15, v16) | Every web project. Handling Next 16 breaking changes (`proxy.ts` replacing `middleware.ts`) documented in Online Registration and TaskBoard |
-| **React 18 / 19** (Server Components + Server Actions) | Online Registration, PrintFlow, TaskBoard |
-| **3D on the web** — React Three Fiber, drei, Rapier (physics), Three.js, leva | 3D kiosk with lanyard physics (PrintFlow); 3D room editor (Floor Planner); portfolio (three-js-portfolio) |
-| **2D canvas** — Konva / react-konva | Interactive table floor plan (Floor Planner) |
-| **PWA / offline-first** — Serwist, Service Workers, IndexedDB | PrintFlow (kiosk with no network), Beacon Presence (end-user PWA) |
-| **UI** — Tailwind CSS 4, shadcn/ui, Radix, Ant Design, Chakra UI | Cross-cutting |
-| **i18n** — next-intl, 6 locales with LLM multi-provider translation | Online Registration |
-| **Server state** — TanStack Query (optimistic mutations) | TaskBoard |
+| **Next.js App Router · React** | [Online Registration](projects/online-registration.md) — Individual/group flows, server actions and tenant-specific web journeys |
+| **React Three Fiber · Rapier** | [PrintFlow](projects/printflow.md) — Implementation of a configurable 3D kiosk alongside the printing workflow |
+| **Three.js · 2D views** | [Floor Planner](projects/floor-planner.md) — Mentorship of the editor project; the intern implemented the application |
+| **Serwist · IndexedDB** | [PrintFlow](projects/printflow.md) — Prepared local assets and replay of queued print-state changes |
+| **next-intl · translation pipeline** | [Online Registration](projects/online-registration.md) — Six locale catalogs and structured fallbacks; linguistic review distinguished from key parity |
+| **TanStack Query · Supabase Realtime** | [TaskBoard](projects/taskboard.md) — Client state and request/vote updates in an internal tool |
 
----
+## Backend and integration
 
-## Backend
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **NestJS** (v10, v11) — REST, WebSocket, SSE, GraphQL, guards, cron | PrintFlow (41 endpoints), AudioNow, Realtime Translation, Beacon Presence |
-| **Next.js Server Actions** as the backend layer | Online Registration (56 actions), TaskBoard |
-| **Server-side rendering to media** — Puppeteer (headless Chrome), PNG/PDF generation at 3× scale | PrintFlow |
-| **Document generation** — jsPDF, ExcelJS | Online Registration, Schedule Builder |
-| **Long-running jobs / workers** — external Docker worker, queue polling | Floor Planner (floor-plan importer), Online Registration (Vercel Cron) |
+| **NestJS · LiveKit** | [AudioNow](projects/audionow.md) — Server-side translation clients, shared audio tracks and session ownership |
+| **Next.js Server Actions · Drizzle** | [Online Registration](projects/online-registration.md) — Purchasing identities, payment actions and relational ownership checks |
+| **Puppeteer · HTML to PNG/PDF** | [PrintFlow](projects/printflow.md) — Resolution-configurable generation, bounded concurrency and browser recovery |
+| **FileMaker Data API** | [Schedule Builder](projects/schedule-builder.md) — Read-only application wrapper, record mapping and manual CSV fallback |
+| **Controlled queue handlers** | [Online Registration](projects/online-registration.md) — Deferred legacy writes with permitted operations and parameter boundaries |
+| **Tesseract.js · Jimp · PDF text** | [Floor Planner](projects/floor-planner.md) — Technical guidance on the located import workflow; OCR executes in the Next.js route/process |
 
----
+## Data and access control
 
-## Data
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **PostgreSQL** — relational design, single-table design, partial indexes, constraints | Cross-cutting |
-| **Supabase** — RLS, Realtime, Auth, Storage, `SECURITY DEFINER` RPCs, triggers | AudioNow (20 tables, 77 functions/triggers), TaskBoard, Floor Planner |
-| **Drizzle ORM** | Online Registration (31 tables) |
-| **Prisma ORM** (v5, v6) | PrintFlow, AudioNow, Realtime Translation |
-| **DynamoDB** — single-table with GSIs, TTL | Beacon Presence |
-| **Redis** — Upstash / ElastiCache: cache, rate limiting, pub/sub, single-flight token cache | Online Registration, Schedule Builder, Beacon Presence |
-| **Migrations** — versioned, with destructive-change feature-flag gates | Online Registration (31 migrations), AudioNow (76) |
+| **PostgreSQL · Drizzle** | [Online Registration](projects/online-registration.md) — Relational model, constraints, indexes and versioned SQL migrations |
+| **Supabase RLS · RPCs · triggers** | [AudioNow](projects/audionow.md) — Three-tier streaming permissions and controlled state-change paths |
+| **Prisma · PostgreSQL** | [PrintFlow](projects/printflow.md) — Credential/design persistence and reconciliation between data sources |
+| **DynamoDB · GSIs · TTL** | [Beacon Presence](projects/ble-presence.md) — State model for the software presence pipeline |
+| **Redis · single-flight token cache** | [Schedule Builder](projects/schedule-builder.md) — Shared FileMaker session token and lock; distinguished from agenda-data caching |
+| **Supabase Realtime** | [TaskBoard](projects/taskboard.md) — Subscriptions around persisted requests and in-app notifications |
 
----
+## Real-time media and AI
 
-## Real-time & streaming
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **LiveKit** (WebRTC SFU) — `@livekit/rtc-node`, server-side bots, DataChannel | AudioNow, Realtime Translation |
-| **Audio processing** — PCM resampling, soft-knee limiter (tanh), chunk smoothing | AudioNow |
-| **Supabase Realtime** — table-change subscriptions | TaskBoard, Floor Planner |
-| **IoT pipelines** — MQTT/TLS → AWS IoT Core → Kinesis → Lambda, <500 ms latency | Beacon Presence |
+| **WebRTC SFU · server-side bots** | [AudioNow](projects/audionow.md) — One translated track distributed to listeners; translation sessions organized per room/language |
+| **PCM · limiter · resampling** | [AudioNow](projects/audionow.md) — Peak compression, chunk smoothing and sample-rate adaptation with branch-specific scope |
+| **Speech-provider registry** | [Realtime Translation](projects/realtime-translation.md) — Seven registered adapters behind one contract; live validation differs by adapter |
+| **Watchdogs · adaptive playout** | [Realtime Translation](projects/realtime-translation.md) — Session robustness and queue-depth control; bounded observability in the PoC evolution |
 
----
+## Algorithms and infrastructure
 
-## AI integrations
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **Speech-to-speech translation** — Palabra.ai, Azure Live Interpreter v2, OpenAI Realtime API, Google Gemini Live, Grok | AudioNow (production), Realtime Translation (7 switchable providers) |
-| **Vision + OCR** — GPT-4.1 for floor-plan import, with OpenCV / Tesseract / PaddleOCR fallback | Floor Planner |
-| **LLM text translation** — multi-provider chain with fallback (OpenAI → Google → Anthropic) | Online Registration (i18n) |
-| **LLM robustness patterns** — watchdog timeouts, anti-hallucination, proactive session renewal, zero-shot voice cloning | Realtime Translation |
+| **Kalman filter · hysteresis** | [Beacon Presence](projects/ble-presence.md) — RSSI filtering and presence transitions; physical calibration remained a separate milestone |
+| **AWS IoT · Lambda · SQS** | [Beacon Presence](projects/ble-presence.md) — Four processing stages with queue boundaries; Kinesis/S3 as parallel ingestion branches |
+| **AWS CDK** | [Beacon Presence](projects/ble-presence.md) — Infrastructure as code for the MVP; not a claim of currently running cloud infrastructure |
+| **Docker · Chromium · Railway** | [PrintFlow](projects/printflow.md) — Backend deployment with headless rendering and constrained memory |
+| **Vercel · Railway · Supabase** | [AudioNow](projects/audionow.md) — Separate web, API and data services; single API replica in the described version |
+| **Electron · Windows packaging** | [PrintFlow](projects/printflow.md) — Desktop bridge, silent print requests and portable/NSIS distribution |
 
----
+## Payments, privacy and collaboration
 
-## Algorithms & systems
-
-| Skill | Evidence |
+| Technology or practice | Case and contribution |
 |---|---|
-| **Signal filtering** — Kalman filter for RSSI smoothing (-27% noise) | Beacon Presence |
-| **State machines** — presence detection with hysteresis (4 states, -70/-80 dBm thresholds) | Beacon Presence |
-| **Idempotency** — payment retries via `id_intento`, find-or-create in the FileMaker queue | Online Registration |
-| **Concurrency** — browser singleton with recovery, anti-zombie mutex on translation sessions | PrintFlow, AudioNow |
+| **Redsys · attempt identity** | [Online Registration](projects/online-registration.md) — Gateway signing, webhook handling, retry ownership and payment-attempt reuse |
+| **OTP · iron-session · bcrypt** | [Online Registration](projects/online-registration.md) — Distinct identities for individual attendees and authenticated group buyers |
+| **Data boundaries · audit records** | [Online Registration](projects/online-registration.md) — Role/tenant restrictions and explicit privacy requirements; not a legal-compliance certification |
+| **Notifications · Resend** | [TaskBoard](projects/taskboard.md) — In-app persistence followed by an email attempt with isolated errors; activation scope dated in the case |
+| **Mentorship · technical review** | [Floor Planner](projects/floor-planner.md) — Initial architecture, implementation guidance and review; code authored by the intern |
 
----
+## Engineering practice
 
-## Infrastructure & DevOps
+The cases connect these tools to constraints and alternatives. [Methodology](METHODOLOGY.md) explains discovery, planning, review and AI assistance; [testing and validation](TESTING.md) separates inventory, historical execution and operational checks.
 
-| Skill | Evidence |
-|---|---|
-| **Vercel** — Next.js deployments, Cron, environment management | 8 projects deployed |
-| **Railway** — NestJS backend in Docker, managed PostgreSQL | PrintFlow, AudioNow |
-| **AWS CDK** (IaC) — VPC, DynamoDB, ElastiCache, SQS, Lambda, ECS Fargate, Cognito, WAF | Beacon Presence |
-| **Docker** — multi-stage builds with Chromium, workers as containers | PrintFlow, Floor Planner |
-| **CI/CD** — GitHub Actions (lint, typecheck, test, Playwright E2E, Artillery load, CDK synth) | Beacon Presence, others |
-| **Desktop app** — Windows installer via GitHub Actions (silent printing) | PrintFlow |
-
----
-
-## Payments, security & compliance
-
-| Skill | Evidence |
-|---|---|
-| **Redsys payment gateway** — HMAC-SHA256 signing, server-to-server webhook, idempotency | Online Registration |
-| **Authentication** — `iron-session`, passwordless OTP (Twilio Verify / Resend), bcrypt + pepper, dual session | Online Registration |
-| **Authorization** — RLS, `SECURITY DEFINER` RPC + `BEFORE UPDATE` trigger, 3-tier role hierarchy | AudioNow, TaskBoard |
-| **Rate limiting / anti-abuse** — Upstash, circuit breaker, magic-byte validation on uploads | Online Registration, PrintFlow, Beacon Presence |
-| **Privacy** — anti-impersonation rules, data fences (never expose tax IDs), `audit_log` | Online Registration |
-
----
-
-## Methodology
-
-| Skill | Evidence |
-|---|---|
-| **AI-augmented development** — Claude Code with phase-based planning (GSD) | Cross-cutting (`.planning/` in every repo) |
-| **Goal-backward verification** — `VERIFICATION.md` per phase | Online Registration, PrintFlow, AudioNow, Realtime Translation |
-| **TDD / testing** — Vitest, Jest, Testing Library; 881 tests (Registration), 366+ files (Beacon) | Online Registration, Beacon Presence |
-| **Technical writing** — specs, informal ADRs, Mermaid diagrams | Cross-cutting |
-| **Mentorship** — trained an intern in AI tooling and 3D libraries | Floor Planner |
+[Back to overview](README.md)
