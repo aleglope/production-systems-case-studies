@@ -2,13 +2,19 @@
 
 # PrintFlow
 
-> Sistema completo para generar, gestionar e imprimir tarjetas identificativas personalizadas bajo demanda, con un **kiosco 3D** de autoservicio y modo **offline-first**. En producción en un despliegue real de alta afluencia.
+> Sistema de credenciales con generación de tarjetas, **kiosco 3D** y conexión con impresión física. Combina una web de gestión, un cliente Windows y operación con material preparado para trabajar sin red.
+
+| | Alcance de este caso |
+|---|---|
+| **Mi contribución** | Arquitectura e implementación full-stack, integración de fuentes, experiencia de kiosco y conexión con impresión de escritorio. |
+| **Entregado** | Generación y conciliación de credenciales, editor de diseños, kiosco, cliente Electron e infraestructura de preparación offline y sincronización. |
+| **Estado de la versión** | Uso presencial documentado el **12 de mayo de 2026**, seguido de mejoras v1.1 hasta el **29 de mayo de 2026**. La extensión de vídeo configurable mantenía un checkpoint de validación offline específico. |
 
 ---
 
 ## Contexto y problema
 
-En el sitio, entregar las credenciales es el primer cuello de botella: cientos de personas llegan a la vez y necesitan su tarjeta física impresa **al instante**. El proceso manual genera colas y errores.
+En una recepción presencial, entregar las credenciales puede convertirse en un cuello de botella: las personas llegan a la vez y necesitan una tarjeta física. La búsqueda y preparación manual añaden pasos y oportunidades de error.
 
 Además, los datos personales viven en **dos fuentes distintas** según el tenant — una API de directorio externa y la base FileMaker interna — y cada una usa convenciones de campo diferentes (p. ej. qué columna contiene el DNI/pasaporte). El sistema tenía que **unificar ambas fuentes** y funcionar **aunque se cayera internet** en el emplazamiento.
 
@@ -16,28 +22,58 @@ Además, los datos personales viven en **dos fuentes distintas** según el tenan
 
 ## Solución y arquitectura
 
-Una persona escanea su QR en el kiosco → aparece una **animación 3D de bienvenida** con su nombre → su tarjeta se **imprime automáticamente**. Sin colas, sin esperas.
+Una persona escanea su QR, el kiosco recupera su credencial, muestra la experiencia de bienvenida y solicita la impresión desde el cliente de escritorio. El diseño reduce la intervención manual y permite usar las tarjetas ya preparadas si se pierde la conexión.
 
 ```mermaid
-flowchart LR
-    HEL[("API de directorio externa")] --> SYNC["Sync Service<br/>conciliación multi-fuente"]
-    FM[("FileMaker DAPI<br/>solo lectura")] --> SYNC
-    SYNC --> PG[("PostgreSQL<br/>Prisma · Badge · Design · SyncLog")]
-    PG --> PUP["Puppeteer<br/>HTML → PNG/PDF · escala 3×"]
-
-    PUP --> API["REST API · NestJS 11<br/>41 endpoints"]
-    API --> KIOSK["/badge · Kiosco PWA<br/>máquina de 7 estados · R3F + Rapier"]
-    API --> SEC["/secretaria<br/>buscar + reimprimir"]
-    API --> PANEL["/panel · Admin<br/>diseños · sync · estadísticas"]
-
-    KIOSK -. "Service Worker Serwist" .-> CACHE[("Cache + IndexedDB<br/>opera sin red")]
-
-    style PG fill:#065f46,color:#fff
-    style FM fill:#1f2937,color:#fff
-    style HEL fill:#1f2937,color:#fff
+flowchart TB
+    subgraph PREP["Preparación con conexión"]
+        HEL[("Directorio externo")] --> SYNC["Conciliación multi-fuente"]
+        FM[("FileMaker<br/>lectura de asistentes")] --> SYNC
+        SYNC --> PG[("PostgreSQL · Prisma")]
+        PG --> PUP["Puppeteer<br/>PNG/PDF · resolución configurable"]
+        PUP --> API["API NestJS<br/>credenciales y diseños"]
+        API --> PANEL["Panel web<br/>diseños · búsqueda · reimpresión"]
+    end
+    subgraph LOCAL["Puesto preparado para uso presencial"]
+        CACHE[("Datos, PNG y assets<br/>cache local")]
+        QR["Escaneo QR"] --> KIOSK["Kiosco PWA<br/>R3F + Rapier"]
+        CACHE --> KIOSK
+        KIOSK -- "PNG · puente IPC" --> DESKTOP["Electron · Windows"]
+        DESKTOP --> DRIVER["Driver / cola de impresión"]
+        DRIVER --> PRINTER["Impresora"]
+        KIOSK --> QUEUE[("IndexedDB<br/>acciones pendientes")]
+    end
+    API -- "preparar datos y assets" --> CACHE
+    QUEUE -. "replay al reconectar" .-> API
 ```
 
-El **kiosco** es una máquina de estados (`IDLE → QR escaneado → bienvenida → transición 3D/vídeo → preview → impresión`) renderizada con **React Three Fiber + Rapier**, con la tarjeta colgando de un cordón con física real. La **PWA** precarga con Serwist los PNG y vídeos en *cache*, y guarda en IndexedDB una cola de acciones (marcar como impreso) que sincroniza cuando vuelve la conexión.
+*Ruta conceptual de preparación y operación de la versión descrita en mayo de 2026. Offline utiliza datos y material precargados; el camino de impresión pasa por el cliente y el driver del puesto.*
+
+El **kiosco** organiza escaneo, transición, bienvenida, vista de la credencial y solicitud de impresión como una máquina de estados. **React Three Fiber + Rapier** renderiza la tarjeta colgando de un cordón con física. La preparación descarga los PNG ya generados y los assets del diseño; la PWA los conserva con Serwist y almacenamiento local. IndexedDB mantiene una cola de acciones para sincronizar el estado cuando vuelve la conexión.
+
+### De la credencial local al trabajo de impresión
+
+```mermaid
+sequenceDiagram
+    participant K as Kiosco PWA
+    participant C as Cache local
+    participant E as Electron
+    participant A as API
+    K->>C: Recuperar credencial<br/>y PNG preparados
+    C-->>K: Datos y PNG local
+    K->>E: Solicitar impresión<br/>mediante bridge IPC
+    E->>E: Enviar trabajo silencioso<br/>al driver de impresión
+    E-->>K: Resultado del envío
+    opt Envío aceptado
+        K->>C: Encolar marcado de impresión
+    end
+    opt Conectividad recuperada
+        K->>A: Reenviar acciones pendientes
+        A-->>K: Resultado de sincronización
+    end
+```
+
+*Camino simplificado de una credencial ya preparada. El resultado del bridge/driver describe el envío del trabajo; la salida del papel requiere comprobación operativa de la impresora.*
 
 ---
 
@@ -45,21 +81,21 @@ El **kiosco** es una máquina de estados (`IDLE → QR escaneado → bienvenida 
 
 | Tecnología | Decisión | Por qué |
 |---|---|---|
-| **Puppeteer 24** | *Singleton* de navegador con recuperación de *zombies* y *batch* de concurrencia configurable (default 1) | Railway limita a 1 GB de RAM: un solo Chrome headless a la vez, con *health-check* que reinicia si queda inconsistente |
-| **Generación a escala 3×** | Renderizar HTML → PNG/PDF a triple resolución | Calidad de impresión física nítida partiendo de plantillas HTML/CSS |
+| **Puppeteer 24** | *Singleton* de navegador con recuperación y lotes de concurrencia configurable (default 1) | El entorno elegido tenía un presupuesto de 1 GB de RAM; reutilizar Chromium evita lanzar un navegador por tarjeta |
+| **Resolución configurable** | Renderizar HTML → PNG/PDF con factor de escala según el diseño | Ajusta calidad y consumo de recursos a la salida de impresión |
 | **FileMaker solo lectura + multi-tenant** | Campo DNI configurable por diseño (`fmDniFieldName`) | Cada tenant usa un campo distinto; se cambia sin tocar código |
 | **Conciliación directorio externo ↔ FileMaker** | 3 índices (`byEmail`, `byQrtoken`, `byInscripcion`) sobre el mismo *mapping* | El origen del dato del QR varía según configuración; recomputar no resetea tarjetas ya generadas |
-| **Serwist 9 (PWA)** | *Offline-first* con cache de assets + cola en IndexedDB | El kiosco debe seguir imprimiendo si se cae la red del recinto |
-| **App de escritorio Windows** | Instalador publicado vía GitHub Actions para impresión silenciosa | La impresión automática sin diálogos requiere un *host* nativo en el PC del kiosco |
+| **Serwist 9 (PWA)** | Precarga de datos/PNG/assets y cola en IndexedDB | Permite operar con material preparado durante una caída de red y reconciliar acciones después |
+| **App de escritorio Windows** | Electron y empaquetado portable/NSIS con pipeline GitHub Actions | Un host nativo conecta la web con la impresión silenciosa del puesto |
 
 ---
 
 ## Retos técnicos resueltos
 
-- ***Self-heal* de almacenamiento.** Railway usa contenedores efímeros: cada *redeploy* borra `/storage`. Si una petición de PNG no encuentra el archivo, **se regenera bajo demanda** y se vuelve a cachear.
-- **Generación masiva con progreso y cancelación.** Generar ~2000 tarjetas tarda más de una hora: un `Map` de progreso + *endpoint* de *polling* + flag de cancelación que cada *worker* comprueba dan *feedback* real y permiten abortar.
+- ***Self-heal* de almacenamiento.** El disco efímero del despliegue podía perder los archivos generados. Si una petición no encuentra el material, **se regenera bajo demanda** y se vuelve a cachear.
+- **Generación por lotes con progreso y cancelación.** Un `Map` de progreso, un endpoint de consulta y una señal de cancelación comprobada por los workers permiten seguir el lote y detenerlo sin depender de un tiempo estimado fijo.
 - **Validación sin dependencias.** Lectura de dimensiones de imagen leyendo cabeceras PNG/JPEG (rechaza fondos < 600 px) y *sniffing* de *magic bytes* en *uploads* de vídeo (MP4/WebM) para no fiarse del `Content-Type`.
-- **Sincronización de estado offline.** El kiosco imprime sin red y, al reconectar, concilia qué tarjetas quedaron marcadas como impresas.
+- **Sincronización de estado offline.** Para credenciales preparadas, el kiosco usa el PNG local y encola el marcado tras el retorno satisfactorio del envío a impresión. El replay deduplica acciones y las concilia al reconectar.
 
 ---
 
@@ -68,28 +104,37 @@ El **kiosco** es una máquina de estados (`IDLE → QR escaneado → bienvenida 
 Dos piezas convierten PrintFlow en una herramienta que **el equipo opera de forma autónoma**, sin tocar código:
 
 ### Editor visual de diseños
+
 Desde `/panel/designs` el equipo crea y edita cada modelo de tarjeta:
+
 - **Origen de datos por diseño** — selecciona la base FileMaker (`fm-database-select`) y el campo de documento (DNI/pasaporte) de cada tenant.
-- **Maquetación física** — colores, fondos, títulos y textos de la tarjeta, posicionados en coordenadas reales (mm) para una impresión exacta.
-- **Editor del kiosco** (`kiosk-editor`, por diseño) — configura toda la experiencia de autoservicio: **vídeos** de bienvenida y de transición, **tema** (colores y fondo), títulos y textos, el tipo de **transición 3D** y el propio **cordón**. El equipo cambia el "tema" de cada despliegue **sin tocar código ni desplegar**.
+- **Maquetación física** — colores, fondos, títulos y textos de la tarjeta, posicionados en milímetros para ajustar el diseño al soporte.
+- **Editor del kiosco** (`kiosk-editor`, por diseño) — configura colores, fondo, títulos y textos, además de la transición 3D o vídeo. El vídeo sustituye la transición; se conservan la bienvenida y la vista final de la credencial. La configuración se guarda por diseño y se carga al abrir o refrescar el kiosco.
 
 ### Experiencia 3D del kiosco
+
 La animación combina varias librerías y componentes propios:
+
 - **`badge-lanyard-3d`** — la tarjeta cuelga de un cordón con **física real** (React Three Fiber + Rapier).
 - **`ripple-grid`** — fondo animado por *shader*.
 - **`scan-transition-3d`** — transición 3D al escanear el QR.
 - **`scene-3d-fallback`** — degradación elegante si el hardware del emplazamiento no dispone de WebGL.
 
 ### App de escritorio — impresión silenciosa
-Un cliente **Electron para Windows** (carpeta `desktop/`) ejecuta el kiosco a pantalla completa e imprime **sin los diálogos del navegador**: la persona escanea y la tarjeta sale directa a la impresora predeterminada. Se empaqueta con **`electron-builder`** como instalador **portable + NSIS** (`pack:win`), con la URL de la app incrustada en el build. Modo kiosco y URL configurables (`PRINTFLOW_DESKTOP_APP_URL`, `PRINTFLOW_KIOSK`).
+
+El cliente **Electron para Windows** ejecuta el kiosco a pantalla completa. La web transforma el PNG en un payload para el bridge; el proceso principal de Electron envía el trabajo **sin los diálogos del navegador**. La selección usa la impresora predeterminada y dispone de alternativas si no la encuentra.
+
+Se empaqueta con **`electron-builder`** como **portable o instalador NSIS**. La URL de la web y el modo kiosco son configurables, lo que permite preparar el puesto sin modificar la aplicación web.
 
 ---
 
 ## Resultado e impacto
 
-- **En producción en un despliegue real a gran escala**: generación de tarjetas, conciliación multi-fuente, experiencia 3D en kiosco e impresión física, con 1 kiosco + 2 PCs de personal.
-- **Métricas:** 41 *endpoints* REST · 3 modelos Prisma · arquitectura *backend* (NestJS) + *frontend* (Next.js 16) en monorepo · despliegue **Vercel** (web) + **Railway** (API en Docker con Chromium) + PostgreSQL gestionado.
-- Ciclo de mejora posterior al despliegue gestionado como *backlog* priorizado de peticiones del cliente.
+- **Uso presencial documentado el 12 de mayo de 2026**, con generación de credenciales, conciliación de fuentes, kiosco e impresión física. El feedback posterior se convirtió en un backlog de mejoras operativas.
+- **v1.1 cerró mejoras hasta el 29 de mayo de 2026:** textos y búsqueda configurables, mejoras del editor y transición de kiosco seleccionable por diseño. El último registro mantenía pendiente la validación E2E del nuevo vídeo offline y del cambio de modo sin redespliegue.
+- **Separación de responsabilidades:** API NestJS con generación Chromium, web Next.js y cliente Electron para el puesto de impresión. El módulo de credenciales declara 41 rutas HTTP, además de los healthchecks, y 3 modelos Prisma en la versión descrita.
+
+**Límite operativo:** trabajar sin red exige preparar previamente datos, PNG y assets; no genera credenciales nuevas contra FileMaker durante la caída. El despliegue descrito separa Vercel para la web, Railway para la API y PostgreSQL gestionado. La preparación del puesto, el driver y la impresora forman parte de la entrega operativa.
 
 ---
 

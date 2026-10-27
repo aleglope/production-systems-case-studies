@@ -2,45 +2,51 @@
 
 # Floor Planner
 
-> Interactive **2D/3D floor plan** for seat and table booking: users identify themselves, see the room in real time and pick their seat. **A mentorship project** — developed by an intern under my technical direction.
+> A mentorship project for **2D/3D room planning and seat reservations**, with live seat state and floor-plan import. An intern implemented the application under my technical direction.
+
+## My contribution & delivered scope
+
+- **My contribution:** technical mentorship, initial architecture, introducing 2D/3D libraries, teaching disciplined use of AI assistance and reviewing the project's evolution. **I was the mentor, not the code author.**
+- **Delivered scope:** attendee identification by code, reservations with Supabase Realtime, switchable 2D/3D views, room editing and file import using PDF extraction and OCR.
+- **Historical stage — 30 April 2026:** the learning project had expanded from an initial 2D plan to the editor and importer described here. Deployment preparation was documented separately as the next stage.
 
 ---
 
 ## Context & problem
 
-Seating a large room needs capacity management and table assignment. The idea: a **visual, interactive floor plan** where users see tables and chairs, their real-time state (free / taken / selected / assigned to them), and confirm their booking — from their phone or at an on-site kiosk with a QR scanner.
+Assigning tables and seats requires a shared view of room capacity and reservations. The project gives attendees a **visual floor plan** where they can identify themselves, distinguish free, occupied and selected seats, and confirm a reservation.
 
-**My role was technical mentor, not code author.** I was responsible for an intern, and this project was their learning vehicle. My contribution consisted of:
-
-- Teaching them to **work with AI assistance** (Claude Code) in a disciplined way.
-- Introducing them to the **3D/2D libraries** of the ecosystem (Three.js, React Three Fiber, drei, Konva) that I was already using in PrintFlow.
-- Defining the starting architecture (Next.js + Supabase + Realtime) and reviewing its evolution.
+It was also a practical learning project. My role was to help an intern turn a sequence of features into an application with clear boundaries between the room model, rendering, reservations and administrative tools. The intern's implementation remains their contribution.
 
 ---
 
 ## Solution & architecture
 
-The project started as a 2D floor plan with `react-konva` and Supabase Realtime, and **evolved far beyond its initial scope** under mentorship: a 3D room editor, an AI-vision floor-plan importer, and an on-site QR flow.
+The first 2D implementation used `react-konva`. The version described here combines a **custom 2D view with Three.js/React Three Fiber**, backed by Supabase reservations and Realtime updates.
+
+The administrative importer processes files through a **Next.js server route**. It combines text and positional extraction from PDFs with Jimp preprocessing and Tesseract.js OCR, then creates the tables and chairs used by the editor.
 
 ```mermaid
 flowchart TB
-    ID["User identifies<br/>code / QR"] --> ROOM["Loads the room layout"]
+    ID["Attendee code"] --> ROOM["Load room layout"]
     ROOM --> VIEW{"View"}
-    VIEW --> V2D["2D plan · Konva"]
-    VIEW --> V3D["3D room · Three.js + R3F + drei"]
-    V2D --> SEAT["Picks a seat → confirms reservation"]
+    VIEW --> V2D["Custom 2D plan"]
+    VIEW --> V3D["3D room<br/>Three.js + R3F + drei"]
+    V2D --> SEAT["Select seat · confirm reservation"]
     V3D --> SEAT
-    SEAT --> SUPA[("Supabase · reservations")]
+    SEAT --> SUPA[("Supabase<br/>reservations")]
     SUPA -- "Realtime" --> ROOM
 
-    subgraph IMPORT["Floor-plan importer · AI"]
-        IMG["Plan image / PDF"] --> WORKER["External worker · Docker<br/>GPT-4.1 + OpenCV + Tesseract/PaddleOCR"]
-        WORKER --> JOB[("plan_import_jobs · Supabase")]
-    end
-    JOB -.-> ROOM
+    FILE["Administrator uploads<br/>a plan image / PDF"] --> IMPORT["Next.js server route<br/>PDF extraction · Jimp · Tesseract.js"]
+    IMPORT --> LAYOUT[("Supabase<br/>tables · chairs")]
+    LAYOUT --> EDIT["Room editor"]
+    EDIT --> ROOM
 
     style SUPA fill:#065f46,color:#fff
+    style LAYOUT fill:#065f46,color:#fff
 ```
+
+*Implemented reservation and import paths in the April 2026 application.*
 
 ---
 
@@ -48,33 +54,31 @@ flowchart TB
 
 | Technology | Decision | Why |
 |---|---|---|
-| **Supabase Realtime** | Seat state synchronized over WebSocket | Several people reserving at once see changes instantly |
-| **Konva (2D) + Three.js/R3F (3D)** | Dual switchable views: 2D plan and 3D room | Progressive 2D-to-3D learning curve; better experience at the on-site kiosk |
-| **AI floor-plan importer** | GPT-4.1 as the primary vision layer, with a deterministic fallback (OpenCV + Tesseract/PaddleOCR) | Turns a plan image/PDF into structured tables and chairs, with a safety net if the AI fails |
-| **External Docker worker** | Heavy OCR and long-running jobs live outside Vercel | Vercel doesn't fit heavy OCR / Python / temp filesystems; the worker consumes a Supabase job queue |
-| **On-site QR flow** | Dedicated QR scanner + touch/joystick kiosk controls | Booking on site, not only from the user's phone |
+| **Supabase Realtime** | Subscribe to reservation changes | Lets connected clients refresh the shared seat state |
+| **2D + Three.js/R3F/drei** | Offer switchable views, with 2D available when 3D is unsuitable | Keeps seat selection accessible across devices while allowing spatial editing |
+| **PDF extraction + OCR** | Read digital text/positions first and use OCR for image-based content | Handles different kinds of input without treating every document as an image |
+| **Jimp + Tesseract.js** | Preprocess images and recognize text in the Next.js server import path | Keeps import and persistence in one application; OCR runtime requirements remain part of deployment planning |
+| **Shared room model** | Import tables and chair counts into the layout used by the editor and reservations | Connects document interpretation to editable room data |
 
 ---
 
-## Solved technical challenges (by the intern, under mentorship)
+## Technical challenges addressed by the intern, under mentorship
 
-- **From 2D to 3D**: going from a `react-konva` plan to a 3D room editor with Three.js, precise chair picking and mobile touch controls.
-- **AI-vision floor-plan import** with a fallback architecture: with `OPENAI_API_KEY` present, GPT-4.1 interprets the plan; without it, or on failure, it falls back to a deterministic OpenCV/OCR importer.
-- **Frontend (Vercel) / worker (Docker) split** for long-running jobs, communicating through a Supabase jobs table.
-- **On-site vs. mobile flows** differentiated, with fullscreen, orientation handling and guided overlays.
+- **From a 2D plan to a 3D editor:** evolving rendering and interaction while retaining the room and reservation model.
+- **Seat selection across views:** coordinating selected, occupied and attendee-assigned states in 2D and 3D.
+- **Floor-plan import:** combining PDF text/position extraction, OCR and fallback layout positions into structured tables and chairs.
+- **Shared reservation state:** connecting database changes to the attendee interface through Realtime.
 
 ---
 
-## Outcome & impact
+## Outcome & learning
 
-- **Value for me as a mentor:** it demonstrates **technical leadership** — defining an architecture, transferring knowledge (AI + 3D) to a junior, and guiding a project that far exceeded its initial scope.
-- **The intern's outcome:** a system that evolved from a basic 2D plan into a platform with a 3D editor, AI floor-plan import and an on-site QR flow.
-- **Metrics:** Next.js 14 · 9 Supabase migrations · RLS · AI import pipeline + Docker worker · deployable on Vercel + worker on Render/Railway/Fly.
+The intern delivered an application that grew from a basic 2D seating plan into **2D/3D room views, reservation flows, editing and OCR-based import tools**. This case study follows that April 2026 version and its learning deliverables.
 
-> I include this project not as my own code, but as evidence of **mentorship and technical direction** — a facet as relevant as solo building across the rest of the ecosystem.
+My contribution was the **technical direction and knowledge transfer** behind that learning process: establishing the starting architecture, introducing tools and libraries, and reviewing how the parts fitted together. This case demonstrates mentorship alongside the implementation and integration work described in the other case studies.
 
 ---
 
 ## Skills demonstrated
 
-`Mentorship / technical leadership` · `Three.js + R3F + drei` · `Konva` · `Supabase Realtime` · `AI integration (GPT-4.1 vision)` · `OpenCV / Tesseract / PaddleOCR` · `Docker workers` · `fallback architecture` · `knowledge transfer`
+`Technical mentorship` · `architecture review` · `AI-assisted development guidance` · `Three.js + R3F + drei` · `Konva (initial version)` · `Supabase Realtime` · `PDF extraction` · `Jimp / Tesseract.js` · `knowledge transfer`

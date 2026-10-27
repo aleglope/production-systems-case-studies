@@ -2,92 +2,101 @@
 
 # Realtime Translation
 
-> **Simultaneous voice translation** for live sessions: one speaker talks and 20+ listeners receive the translation in their language in real time. A **multi-AI-provider** architecture with transparent switching across 7 translation engines.
+> A simultaneous voice-translation PoC: one speaker's audio is translated for listeners in different languages, using provider adapters behind a shared session contract.
 
----
+## My contribution and delivery scope
+
+| Aspect | Scope |
+|---|---|
+| My contribution | Architecture and integration of provider adapters, shared contracts, session orchestration and audio/latency controls |
+| Version described | v1.0 delivery recorded on 9 March 2026; v1.1 evolution represented by the source snapshot of 2 May 2026 |
+| Delivered scope | PoC with seven registered adapters, provider lifecycle controls and adaptive playout |
+| Validation scope | Automated checks and phase records; provider-specific live/perceptual evaluation and access gates remained separate work |
 
 ## Context & problem
 
-Human simultaneous interpretation is expensive and doesn't scale to several languages at once. This system explores doing it with AI: **1 speaker → N listeners**, each picking their language, with low latency and quality good enough for a technical session.
+AI speech services differed in audio format, session lifecycle, output stability, latency and cost. The project explored translating **one speaker to multiple listeners** while retaining the ability to compare engines without redesigning the listener experience.
 
-Because the real-time voice-AI market moves extremely fast (Azure, OpenAI, Google, Palabra, Grok… each with different latency/quality/cost trade-offs), the key decision was **not to marry a provider** but to build an architecture where the translation engine is **swappable per session**.
-
----
+The central decision was a **provider registry** with a shared contract. That contract made integration extensible; each adapter still needed its own compatibility checks, operational access and evaluation.
 
 ## Solution & architecture
 
+A Next.js frontend provided speaker and listener modes. The NestJS backend managed LiveKit access and provider orchestration; shared **Zod** schemas defined language, provider and request contracts.
+
+**Diagram scope:** logical routing of the PoC. The registry selects an adapter; the maturity table below qualifies the available adapters. Audio tracks and subtitle messages use separate delivery paths.
+
 ```mermaid
-flowchart LR
-    SP["🎙️ Speaker"] --> LK["LiveKit · WebRTC SFU"]
-    LK --> BOT["NestJS · per-room translator-bot"]
-    BOT --> REG{"ProviderRegistry<br/>engine per session"}
-    REG --> AZ["Azure Speech /<br/>Live Interpreter v2"]
-    REG --> OAI["OpenAI Realtime"]
-    REG --> GEM["Google Gemini Live"]
-    REG --> PAL["Palabra.ai"]
-    REG --> GRK["Grok Realtime"]
-    AZ --> OUT["translated audio + subtitles<br/>DataChannel"]
-    OAI --> OUT
-    GEM --> OUT
-    PAL --> OUT
-    GRK --> OUT
-    OUT --> LK
-    LK --> A1["👂 Listener · language A"]
-    LK --> A2["👂 Listener · language B"]
+flowchart TB
+    SP["Speaker"] --> LK["LiveKit room<br/>WebRTC SFU"]
+    LK --> BOT["NestJS translator bot<br/>room session"]
+    BOT --> REG{"Provider registry"}
+    REG --> AD["Selected adapter<br/>see maturity table"]
+    AD --> AUD["Translated audio tracks"]
+    AUD --> LK
+    AD --> SUB["Partial / final subtitles"]
+    SUB --> DC["LiveKit DataChannel"]
+    LK --> LIST["Listeners<br/>chosen language"]
+    DC --> LIST
 
     style REG fill:#1e3a8a,color:#fff
 ```
 
-The frontend (Next.js 14) has **speaker** and **listener** modes. The backend (NestJS) mints LiveKit tokens and provider credentials **server-side** (no API key ever reaches the browser), and a registry-based `ProviderRegistryService` routes each session to the chosen engine via `POST /api/translation/start { provider }`. **Zod** DTO validation is shared between frontend and backend (type-safe end to end).
+## Adapter maturity in this snapshot
 
----
+The seven registered IDs comprised **two Azure modes** and adapters for OpenAI, Gemini, Google Cloud, Grok and Palabra. Registration describes an integration point, not seven equally validated commercial engines.
 
-## Stack & technical decisions
-
-| Technology | Decision | Why |
+| Adapter | Integration scope | Validation boundary |
 |---|---|---|
-| **Provider registry (NestJS DI)** | Inject a provider array via token; map-based lookup | Adding an engine = create a module and register it; zero `if/else` in the controller |
-| **Server-side tokens** | The backend issues LiveKit tokens + provider credentials; rate-limited | API keys are never exposed to the client |
-| **Shared Zod** (`@repo/schemas`) | Common `Language` / `TranslationProvider` enums and DTOs | Identical validation on both sides, full type safety |
-| **Single bot per room** (`translator-bot-{roomId}`) | Fixed bot identity per room | Prevents double bots and synthesis conflicts; one room = max 1 active translator |
-| **Language ref-counting** | Per-language counter + 30 s grace before teardown | Fast reconnection without restarting the session; optimizes cost |
-| **Subtitles over DataChannel** | JSON `{ text, isFinal }` on topic `translation:{lang}` | Partial and final subtitles synchronized with the audio |
+| **Azure Speech** | Deterministic speech/translation/synthesis path behind the shared contract | Provider-specific live checks remained distinct from registry wiring |
+| **Azure Live Interpreter v2** | Personal Voice integration, fallback chain and voice-profile persistence | Personal Voice required Microsoft Limited Access; profile reuse in synthesis was deferred |
+| **OpenAI Realtime** | Generative audio adapter registered with the session layer | Automated/session checks did not establish general live-session or perceptual equivalence |
+| **Palabra.ai** | Speech-to-speech adapter behind the same contract | Validation here belongs to this PoC, separately from AudioNow's operational use |
+| **Google Gemini Live** | Registered live-audio adapter | Provider-specific validation remained part of the exploration |
+| **Google Cloud** | Registered speech-service adapter | Provider-specific validation remained part of the exploration |
+| **Grok Realtime** | Registered realtime adapter | Provider-specific validation remained part of the exploration |
 
----
+The language schema modeled **14 languages**. Six destinations were configured for the Azure voice strategy; their configuration did not establish perceptual validation of six live voices.
 
-## Provider status
+## Technical decisions and trade-offs
 
-The architecture lets engines be plugged in, but not all are at the same maturity level. Actual status:
-
-| Provider | Type | Status |
+| Decision | Implementation and reason | Trade-off |
 |---|---|---|
-| **Palabra.ai** | generative speech-to-speech | ✅ Finished and tested |
-| **OpenAI Realtime** | generative audio-to-audio | ✅ Finished and tested |
-| **Azure Speech / Live Interpreter v2** | deterministic + zero-shot *Personal Voice* | ✅ Integrated and tested |
-| Google Gemini Live · Google Cloud · Grok Realtime | various | 🟡 Integrated, under validation |
+| **Registry through NestJS dependency injection** | Register adapters and look them up by provider ID | Keeps provider selection out of controller branches; adapter compatibility still needs testing |
+| **Server-side credential handling** | Issue session access from the backend and keep long-lived service secrets there | Requires explicit token/session lifetime and rate-limit controls |
+| **Shared Zod contracts** | Validate the same language/provider/request shapes in frontend and backend | Reduces contract drift while leaving provider-specific errors to the adapter |
+| **Room identity and language reference counts** | Use a stable translator identity and a grace period before language teardown | Reduces reconnect churn; counters, cleanup and duplicate starts need coordination |
+| **Adaptive playout** | Adjust synthesis tempo using queue depth | Addresses accumulated lag; quality and latency need assessment in real sessions |
+| **Subtitles over DataChannel** | Send partial/final text messages separately from audio tracks | Avoids coupling subtitle rendering to the audio payload |
+| **Personal Voice fallback** | Personal Voice → Neural HD → standard Neural | Preserves a fallback path while advanced capabilities depend on service access and evaluation |
 
----
+## Delivery and evolution
 
-## Solved technical challenges
+### v1.0 — PoC delivered
 
-- **Provider switching without rewriting the flow** — the same session can use deterministic Azure or generative OpenAI Realtime as needed.
-- **Robustness against unpredictable LLMs** — 8 s watchdog, proactive session renewal (OpenAI ~60 min, Gemini ~15 min), output validation and TTL-based anti-repetition dedup against hallucinations.
-- **Latency under load** — an `AdaptivePlayoutController` dynamically adjusts synthesis speed based on queue depth to keep lag bounded with 20+ listeners.
-- **Zero-shot voice cloning** — Azure Live Interpreter v2 integration with *Personal Voice* and a fallback chain (Personal Voice → Neural HD → standard Neural).
-- **Browser autoplay policy and reconnection** handled client-side (mandatory user gesture, reconnect with backoff).
+The delivery audit of **9 March 2026** recorded the registry, provider-stability work, session orchestration, adaptive playout and **lag/tempo observability**. Watchdogs, provider-session renewal, output validation and repetition deduplication addressed failures specific to generative audio.
 
----
+Browser playback also needed an initial user gesture and reconnection behavior. These browser constraints were part of the listening flow rather than an assumption that every new connection would autoplay.
 
-## Outcome & impact
+### v1.1 — instrumentation and gated voice capabilities
 
-- **PoC v1.0 delivered** (LLM stability + P50/P95 latency observability), with a v1.1 in progress focused on matching a premium provider's quality with a ~10× cheaper alternative.
-- **Metrics:** 7 switchable AI providers · 14 languages in the schema (6 validated for voice) · ~21,700 LoC of API · 45 test files · models for rooms, sessions, voice profiles and recordings.
-- It served as the **proving ground** for the real-time translation domain that later materialized, in its production version focused on rooms and technicians, in [AudioNow](audionow.md).
+By the source snapshot of **2 May 2026**, the project had added error-rate and first-audio instrumentation. The verification record of **29 April** described Azure P50/P95 measurements over a rolling window per language, from a recognized-speech event to the first translated audio.
 
-> The two projects are sibling efforts within the same domain (live voice translation) with independent codebases: this one explores engine switching; AudioNow takes the use case to production with a focus on room operations.
+That interval measures part of the translation pipeline. Interleaved Azure events introduced a known attribution limit; microphone-to-ear latency and comparisons across engines require their own measurement.
 
----
+Personal Voice integration and fallback were implemented, with exercise of the advanced voice capability subject to **Microsoft Limited Access**. Voice-profile persistence had mock-based verification; reusing stored profiles through SSML was deferred to v1.2.
+
+## Outcome and limits
+
+The result was a delivered PoC and an evolving integration framework for comparing speech engines. A registry entry, an automated check and a listening evaluation answer different questions about an adapter.
+
+Perceptual quality, behavior in sessions with real providers and effective cost remained comparison tasks for the v1.1 evolution.
+
+This project and [AudioNow](audionow.md) had independent codebases. Realtime Translation explored engine extensibility; AudioNow addressed room operations around a reference translation route.
+
+The lesson was to keep a shared orchestration contract while recording each provider's audio requirements, access conditions and evaluation limits. Testing scope is summarized in [Testing](../TESTING.md).
 
 ## Skills demonstrated
 
-`LiveKit` · `OpenAI Realtime API` · `Azure Speech / Live Interpreter v2` · `Google Gemini Live` · `Palabra.ai` · `NestJS (DI, registry pattern)` · `Zod (type-safe full-stack)` · `Next.js 14` · `Prisma` · `LLM system robustness` · `swappable architecture`
+`LiveKit / WebRTC` · `NestJS dependency injection` · `provider registry` · `shared Zod contracts` · `Next.js` · `speech-service integration` · `OpenAI Realtime` · `Azure Speech / Personal Voice integration` · `adaptive playout` · `session lifecycle` · `latency instrumentation`
+
+[Back to case studies](README.md)

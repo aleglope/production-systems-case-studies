@@ -2,38 +2,45 @@
 
 # Schedule Builder
 
-> Schedule generator: it reads sessions straight from **FileMaker** (in **strictly read-only** mode) and renders a visual **Gantt** schedule exportable to **PDF**, with a resilient fallback if the API goes down.
+> A schedule generator that keeps **FileMaker as the source of truth**, reads sessions through a restricted application client and produces a paginated **Gantt/PDF**. A manual CSV path provides an alternative when the live integration is unavailable.
+
+## My contribution & delivered scope
+
+- **My contribution:** implementation of the FileMaker integration, session normalization, server/client data flow and Gantt-to-PDF workflow.
+- **Delivered scope:** launch from a FileMaker button, server-side session retrieval, token sharing through Redis, manual CSV upload and PDF export.
+- **Historical stage — 26 May 2026:** Vercel deployment was documented and one FileMaker-to-PDF flow had been verified end to end. Some live-field mapping and data-parity checks remained pending.
 
 ---
 
 ## Context & problem
 
-The schedule (sessions, rooms, time slots) lives in FileMaker, maintained by the internal team. They needed to generate the **visual schedule document** — a clean, paginated, print-ready Gantt — **without moving the data out of FileMaker** and with zero risk of accidentally modifying it.
+The internal team maintained sessions, rooms and time slots in FileMaker. They needed a **print-ready visual schedule** without creating a second system for editing that data.
 
-The central constraint: the integration had to be **incapable of writing** to FileMaker, and the system had to keep working even if the Data API was down on the day it mattered most.
+The integration needed to limit accidental writes from the application and preserve an alternative way to generate the document on an event day. That led to two data inputs feeding the same schedule model: the Data API and an exported CSV supplied by a person.
 
 ---
 
 ## Solution & architecture
 
-A staff member presses a button **inside FileMaker**, which opens this app with `?evento=<Id>` in the URL. The app resolves the sessions against the FileMaker Data API in read-only mode, caches them and renders the PDF-exportable Gantt.
+A button inside FileMaker opens the app with `?evento=<Id>`. A Next.js Server Component requests `/api/sesiones`; that **Route Handler** calls the FileMaker wrapper and normalizes the response. The browser receives session data for the interactive Gantt and PDF export. Redis stores the **Data API token and refresh lock**.
 
 ```mermaid
-flowchart LR
-    BTN["Button in FileMaker"] -- "?evento=Id" --> APP["Next.js 15 · App Router"]
-    APP --> API["/api/sesiones · server-side RSC"]
-    API --> FMRO["fmReadOnly.find<br/>type firewall · read-only"]
+flowchart TB
+    BTN["FileMaker button"] -- "?evento=Id" --> RSC["Next.js 15<br/>RSC page"]
+    RSC -- "HTTP request" --> API["Route Handler<br/>/api/sesiones"]
+    API --> FMRO["FileMaker wrapper<br/>record reads · container downloads"]
     FMRO --> FM[("FileMaker Data API")]
-    API --> CACHE[("Upstash Redis<br/>single-flight token cache")]
-    API --> GANTT["Gantt render · V1/V4"]
-    GANTT --> PDF["Export PDF"]
-
-    FM -. "if the API is down" .-> CSV["Fallback:<br/>manual CSV upload"]
-    CSV --> GANTT
+    FMRO --> CACHE[("Upstash Redis<br/>token + refresh lock")]
+    API -- "session JSON via RSC" --> CLIENT["Client component"]
+    CSV["User uploads<br/>an available CSV export"] --> CLIENT
+    CLIENT --> GANTT["Interactive Gantt"]
+    GANTT --> PDF["PDF export"]
 
     style FM fill:#1f2937,color:#fff
     style CACHE fill:#7c2d12,color:#fff
 ```
+
+*Implemented data paths. The alternative CSV input requires a valid export and user intervention.*
 
 ---
 
@@ -41,31 +48,32 @@ flowchart LR
 
 | Technology | Decision | Why |
 |---|---|---|
-| **Read-only FileMaker Data API** | Type firewall: the client only exposes read operations | Makes writing to the shared database **impossible by design**, not by convention |
-| **Upstash Redis** | Single-flight token cache + graceful degradation if Redis is missing | The Data API token is reused with no race conditions; if the cache fails, the app keeps going |
-| **CSV fallback** | Manual upload of FileMaker's CSV export | On the critical day the Gantt gets generated even with the Data API down |
-| **Next.js 15 RSC** | The FileMaker call happens in a Server Component | Credentials and logic never reach the browser |
-| **Strict TypeScript + Vitest** | Strict typing and a test suite with FileMaker mocks | Confidence when integrating against a critical legacy system |
+| **Restricted FileMaker wrapper** | Expose record reads and container downloads, without record-write or script methods | Reduces the application surface for accidental writes; server account privileges remain a separate control |
+| **Upstash Redis** | Share the token and serialize refreshes with a single-flight lock | Limits concurrent logins across server instances; direct refresh is supported when Redis is not configured |
+| **Manual CSV fallback** | Parse an existing FileMaker export in the browser | Allows document generation without the live API when a valid export is available |
+| **Next.js RSC + Route Handler** | Fetch initial data on the server; keep interactive rendering in a client component | Keeps FileMaker credentials server-side while supporting browser interaction and export |
+| **Strict TypeScript + Vitest** | Share session types and test mappings with FileMaker mocks | Makes normalization rules explicit across both inputs |
 
 ---
 
-## Solved technical challenges
+## Technical challenges addressed
 
-- **Safe integration with a critical legacy system** — the read-only firewall pattern guarantees a bug can never corrupt the operational database.
-- **Critical-day resilience** — dual path (live API + CSV fallback) and graceful cache degradation: the schedule can **always** be generated.
-- **Paginated Gantt-to-PDF rendering** — coordinating the session schema with a print-ready layout.
-- **CORS whitelist + rate limiting** on the endpoint FileMaker invokes.
+- **Legacy integration with a smaller write surface:** the application imports a wrapper limited to read operations.
+- **Two inputs, one schedule model:** API records and CSV rows feed the same rendering workflow, with date, time and text normalization.
+- **Token coordination:** a shared token cache and refresh lock reduce duplicate session creation. A failure of a configured Redis instance can still interrupt the live path; the manual CSV route remains a separate option.
+- **Paginated PDF output:** session layout and text handling are coordinated with a printable document.
+- **Endpoint controls:** CORS allowlisting and rate limiting are applied to the API route.
 
 ---
 
-## Outcome & impact
+## Outcome & validation
 
-- **In production**, embedded in the team's real workflow (native FileMaker button → schedule PDF).
-- **Metrics:** 57 Vitest tests (green) with FileMaker mocks · strict TypeScript · deployed on **Vercel** · Upstash Redis cache.
-- Complete design documentation (spec + implementation plan) following the ecosystem's development methodology.
+The **26 May 2026 verification record reported 58 passing Vitest tests**, including mocked integration behavior, and a successful TypeScript check. A separate acceptance record documented a real FileMaker → API → Gantt → PDF export for one event. The sponsored-session variant was reviewed in code rather than visually exercised in that acceptance run.
+
+The delivered tool connected FileMaker's existing workflow to a printable schedule while retaining a manual input path. Live confirmation of some field mappings and full API/CSV display parity remained outside that completed check. These records describe the version delivered in May 2026.
 
 ---
 
 ## Skills demonstrated
 
-`Next.js 15 (RSC)` · `FileMaker Data API` · `Upstash Redis` · `PDF generation` · `resilient design (fallback)` · `strict TypeScript` · `Vitest` · `Vercel`
+`Next.js 15 (RSC + Route Handlers)` · `FileMaker Data API` · `Upstash Redis` · `PDF generation` · `data normalization` · `manual fallback design` · `strict TypeScript` · `Vitest` · `Vercel`
